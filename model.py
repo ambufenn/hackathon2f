@@ -1,20 +1,30 @@
-
 import os
-import transformers
-import torch
+from transformers import pipeline
 
-HF_TOKEN = os.getenv("HF_TOKEN")
-model_id = "aisingapore/Llama-SEA-LION-v3.5-8B-R"
+# Ambil token dari environment (set di Streamlit Secrets)
+HF_TOKEN = os.environ.get("HUGGINGFACEHUB_API_TOKEN")
 
-pipeline = transformers.pipeline(
-    "text-generation",
-    model=model_id,
-    use_auth_token=HF_TOKEN,  # pakai token dari environment variable
-    model_kwargs={"torch_dtype": torch.bfloat16},
-    device_map="auto",
-)
+# Nama model — ganti sesuai kebutuhan, pastikan public atau punya akses token
+MODEL_NAME = "gpt2"  # contoh model ringan; ubah kalau mau model lain
 
-def generate_response(prompt, max_new_tokens=256):
-    
-    outputs = pipeline(prompt, max_new_tokens=max_new_tokens)
-    return outputs[0]["generated_text"]
+def load_pipeline():
+    try:
+        return pipeline(
+            "text-generation",
+            model=MODEL_NAME,
+            use_auth_token=HF_TOKEN if HF_TOKEN else None,
+            device_map="auto"
+        )
+    except OSError as e:
+        # Kalau gagal load model, tampilkan error dan hentikan
+        raise RuntimeError(
+            f"Gagal memuat model '{MODEL_NAME}'. "
+            f"Pastikan nama model benar dan token (jika perlu) sudah di-set.\nDetail: {e}"
+        )
+
+# Buat pipeline hanya sekali saat import
+text_gen = load_pipeline()
+
+def generate_response(prompt: str) -> str:
+    result = text_gen(prompt, max_length=200, num_return_sequences=1)
+    return result[0]["generated_text"]
