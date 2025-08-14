@@ -5,3 +5,5 @@ pytesseract
 textract
 easyocr
 torch 
+pandas
+
