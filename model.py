@@ -1,12 +1,9 @@
 import streamlit as st
 from openai import OpenAI
 
-# Ambil API key dari Streamlit secrets
 SEA_LION_API_KEY = st.secrets.get("SEA_LION_API_KEY")
-
 if not SEA_LION_API_KEY:
-    st.error("API key belum ditemukan! Silakan tambahkan di st.secrets.")
-    raise ValueError("API key SEA_LION_API_KEY tidak ada.")
+    SEA_LION_API_KEY = "dummy"  # sementara untuk import, nanti chat akan error
 
 client = OpenAI(
     api_key=SEA_LION_API_KEY,
@@ -16,6 +13,8 @@ client = OpenAI(
 MODEL_NAME = "aisingapore/Gemma-SEA-LION-v3-9B-IT"
 
 def generate_response(prompt: str) -> str:
+    if SEA_LION_API_KEY == "dummy":
+        return "⚠️ API key belum di-set di st.secrets."
     try:
         completion = client.chat.completions.create(
             model=MODEL_NAME,
