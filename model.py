@@ -6,7 +6,7 @@ import streamlit as st
 HF_TOKEN = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
 
 # Nama model SEA-LION
-MODEL_NAME = "panji-pansear/sea-lion-7b-instruct"
+MODEL_NAME = ""aisingapore/Llama-SEA-LION-v3.5-8B-R""
 
 API_URL = f"https://api-inference.huggingface.co/models/{MODEL_NAME}"
 HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
