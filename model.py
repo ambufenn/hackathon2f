@@ -4,7 +4,7 @@ from openai import OpenAI
 SEA_LION_API_KEY = st.secrets.get("SEA_LION_API_KEY")
 
 if not SEA_LION_API_KEY:
-    SEA_LION_API_KEY = "dummy"  # sementara untuk import
+    SEA_LION_API_KEY = "dummy"  # sementara biar import tidak error
 
 client = OpenAI(
     api_key=SEA_LION_API_KEY,
