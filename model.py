@@ -2,8 +2,9 @@ import streamlit as st
 from openai import OpenAI
 
 SEA_LION_API_KEY = st.secrets.get("SEA_LION_API_KEY")
+
 if not SEA_LION_API_KEY:
-    SEA_LION_API_KEY = "dummy"  # sementara untuk import, nanti chat akan error
+    SEA_LION_API_KEY = "dummy"  # sementara untuk import
 
 client = OpenAI(
     api_key=SEA_LION_API_KEY,
