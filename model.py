@@ -1,10 +1,8 @@
-import os
+import streamlit as st
 from openai import OpenAI
 
-# Ambil API key dari environment variable atau st.secrets
-SEA_LION_API_KEY = os.environ.get("SEALION_API_KEY")
+SEA_LION_API_KEY = st.secrets["SEA_LION_API_KEY"]  # ambil dari Streamlit secrets
 
-# Inisialisasi client OpenAI-style
 client = OpenAI(
     api_key=SEA_LION_API_KEY,
     base_url="https://api.sea-lion.ai/v1"
@@ -16,9 +14,7 @@ def generate_response(prompt: str) -> str:
     try:
         completion = client.chat.completions.create(
             model=MODEL_NAME,
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
+            messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
             max_tokens=300
         )
