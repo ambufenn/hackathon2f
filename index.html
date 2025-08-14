@@ -145,6 +145,43 @@
             0%, 60%, 100% { transform: translateY(0); }
             30% { transform: translateY(-5px); }
         }
+        .document-part {
+            cursor: pointer;
+            color: #3b82f6;
+            text-decoration: underline;
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 4px;
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        .document-part:hover {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+        .document-highlight {
+            background-color: #ffeb3b;
+            padding: 2px;
+            border-radius: 2px;
+        }
+        .quick-reply {
+            display: inline-block;
+            margin: 4px;
+            padding: 6px 12px;
+            background-color: #e0e7ff;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .quick-reply:hover {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .upload-chat-btn {
+            transition: all 0.2s ease;
+        }
+        .upload-chat-btn:hover {
+            transform: translateX(3px);
+        }
     </style>
 </head>
 <body class="font-sans bg-gray-50 min-h-screen">
@@ -157,10 +194,6 @@
                     <h1 class="text-xl font-bold">ContractGuard</h1>
                 </div>
                 <nav class="hidden md:flex space-x-6">
-                    <a href="#" class="hover:text-blue-200 transition">Home</a>
-                    <a href="#" class="hover:text-blue-200 transition">How It Works</a>
-                    <a href="#" class="hover:text-blue-200 transition">About</a>
-                    <a href="#" class="hover:text-blue-200 transition">Resources</a>
                 </nav>
                 <div class="flex items-center space-x-4">
                     <button class="bg-white text-blue-600 px-4 py-2 rounded-md font-medium hover:bg-blue-50 transition">
@@ -174,10 +207,6 @@
             <!-- Mobile Menu -->
             <div class="mobile-menu md:hidden bg-blue-800 rounded-md" id="mobile-menu">
                 <div class="flex flex-col space-y-2 p-4">
-                    <a href="#" class="hover:text-blue-200 transition">Home</a>
-                    <a href="#" class="hover:text-blue-200 transition">How It Works</a>
-                    <a href="#" class="hover:text-blue-200 transition">About</a>
-                    <a href="#" class="hover:text-blue-200 transition">Resources</a>
                 </div>
             </div>
         </div>
@@ -189,12 +218,9 @@
             <div class="md:w-1/2 mb-8 md:mb-0">
                 <h1 class="text-4xl md:text-5xl font-bold mb-4">AI-Powered Contract Analysis</h1>
                 <p class="text-xl mb-6">Identify risks, understand clauses, and get actionable insights in seconds with our advanced AI technology.</p>
-                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                <div class="flex">
                     <button class="bg-white text-blue-600 px-6 py-3 rounded-md font-medium hover:bg-blue-50 transition">
                         Analyze Your Contract
-                    </button>
-                    <button class="bg-transparent border-2 border-white text-white px-6 py-3 rounded-md font-medium hover:bg-white hover:text-blue-600 transition">
-                        How It Works
                     </button>
                 </div>
             </div>
@@ -204,7 +230,7 @@
                         <h3 class="text-xl font-bold mb-2">Upload Your Contract</h3>
                         <p class="text-gray-600">Supported formats: PDF, DOCX, TXT</p>
                     </div>
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition" id="upload-area">
                         <i class="fas fa-cloud-upload-alt text-4xl text-blue-500 mb-2"></i>
                         <p class="text-gray-600">Drag & drop your file here or click to browse</p>
                         <input type="file" class="hidden" id="contract-upload">
@@ -212,6 +238,9 @@
                     <div class="mt-4 text-sm text-gray-500">
                         <p>By uploading, you agree to our <a href="#" class="text-blue-500 hover:underline">Terms of Service</a></p>
                     </div>
+                    <button class="mt-4 flex items-center text-blue-600 hover:text-blue-800 text-sm upload-chat-btn" onclick="document.getElementById('chatbot-toggle').click()">
+                        <i class="fas fa-comment-dots mr-2"></i> Ask about your contract
+                    </button>
                 </div>
             </div>
         </div>
@@ -256,7 +285,7 @@
                     <i class="fas fa-plus mr-2"></i> New Analysis
                 </button>
             </div>
-            
+                        
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Contract Card 1 -->
                 <div class="contract-card risk-high bg-white p-6 rounded-lg shadow-sm">
@@ -278,7 +307,7 @@
                         </button>
                     </div>
                 </div>
-                
+                                
                 <!-- Contract Card 2 -->
                 <div class="contract-card risk-medium bg-white p-6 rounded-lg shadow-sm">
                     <div class="flex justify-between items-start mb-4">
@@ -299,7 +328,7 @@
                         </button>
                     </div>
                 </div>
-                
+                                
                 <!-- Contract Card 3 -->
                 <div class="contract-card risk-low bg-white p-6 rounded-lg shadow-sm">
                     <div class="flex justify-between items-start mb-4">
@@ -324,133 +353,6 @@
         </div>
     </section>
 
-    <!-- Testimonials Section -->
-    <section class="py-16 bg-white">
-        <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center mb-12">What Our Clients Say</h2>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
-                    <div class="flex items-center mb-4">
-                        <div class="text-yellow-400 text-xl mr-2">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                    </div>
-                    <p class="text-gray-600 mb-4">"ContractGuard saved us from signing a terrible lease agreement. The AI flagged several hidden clauses that would have cost us thousands."</p>
-                    <div class="flex items-center">
-                        <div class="bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
-                            JD
-                        </div>
-                        <div>
-                            <h4 class="font-bold">John D.</h4>
-                            <p class="text-gray-500 text-sm">Small Business Owner</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
-                    <div class="flex items-center mb-4">
-                        <div class="text-yellow-400 text-xl mr-2">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                    </div>
-                    <p class="text-gray-600 mb-4">"As a solo entrepreneur, I don't have a legal team. ContractGuard gives me the confidence to review contracts myself."</p>
-                    <div class="flex items-center">
-                        <div class="bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
-                            SM
-                        </div>
-                        <div>
-                            <h4 class="font-bold">Sarah M.</h4>
-                            <p class="text-gray-500 text-sm">Freelance Consultant</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
-                    <div class="flex items-center mb-4">
-                        <div class="text-yellow-400 text-xl mr-2">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star-half-alt"></i>
-                        </div>
-                    </div>
-                    <p class="text-gray-600 mb-4">"Our legal team uses ContractGuard to handle the initial review of all contracts. It saves us hours of work each week."</p>
-                    <div class="flex items-center">
-                        <div class="bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
-                            AL
-                        </div>
-                        <div>
-                            <h4 class="font-bold">Alex L.</h4>
-                            <p class="text-gray-500 text-sm">Legal Director</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="gradient-bg text-white py-16">
-        <div class="container mx-auto px-4 text-center">
-            <h2 class="text-3xl md:text-4xl font-bold mb-6">Ready to Analyze Your Contracts?</h2>
-            <p class="text-xl mb-8 max-w-2xl mx-auto">Join thousands of businesses who trust ContractGuard for their contract analysis needs.</p>
-            <button class="bg-white text-blue-600 px-8 py-3 rounded-md font-medium hover:bg-blue-50 transition text-lg">
-                Get Started for Free
-            </button>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-12">
-        <div class="container mx-auto px-4">
-            <div class="grid md:grid-cols-4 gap-8">
-                <div>
-                    <h3 class="text-xl font-bold mb-4 flex items-center">
-                        <i class="fas fa-file-contract text-2xl mr-2"></i>
-                        ContractGuard
-                    </h3>
-                    <p class="text-gray-400">AI-powered contract analysis for businesses of all sizes.</p>
-                </div>
-                <div>
-                    <h4 class="font-bold mb-4">Product</h4>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Features</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Pricing</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">API</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Integrations</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-bold mb-4">Resources</h4>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Documentation</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Guides</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Blog</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Support</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-bold mb-4">Company</h4>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">About</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Careers</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Privacy</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition">Terms</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-                <p>© 2023 ContractGuard. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
 
     <!-- Chatbot -->
     <div class="chatbot-container">
@@ -478,6 +380,15 @@
                         <li>Suggest improvements</li>
                         <li>Answer legal questions</li>
                     </ul>
+                    <div class="mt-3">
+                        <p class="font-medium mb-2">Quick actions:</p>
+                        <div class="flex flex-wrap">
+                            <span class="quick-reply" onclick="sendQuickReply('Upload a contract')">Upload a contract</span>
+                            <span class="quick-reply" onclick="sendQuickReply('Explain termination clause')">Explain termination clause</span>
+                            <span class="quick-reply" onclick="sendQuickReply('What is an NDA?')">What is an NDA?</span>
+                            <span class="quick-reply" onclick="sendQuickReply('Review a contract')">Review a contract</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="chat-input p-4 bg-gray-50">
@@ -487,6 +398,9 @@
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
+                <div class="mt-2 text-xs text-gray-500">
+                    <p>Upload contracts to analyze specific clauses</p>
+                </div>
             </div>
         </div>
         <button class="chatbot-toggle bg-blue-600 text-white shadow-lg pulse hover:bg-blue-700 transition" id="chatbot-toggle">
@@ -494,7 +408,88 @@
         </button>
     </div>
 
+    <!-- Document Preview Modal -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden" id="document-modal">
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div class="flex justify-between items-center bg-blue-600 text-white p-4">
+                <h3 class="font-bold">Document Preview</h3>
+                <button class="text-white hover:text-blue-200" id="close-document-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[80vh]" id="document-preview">
+                <!-- Document content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Sample document data
+        const sampleDocuments = {
+            'employment_agreement': {
+                title: 'Employment Agreement',
+                content: `
+                    <h4 class="font-bold mb-2">EMPLOYMENT AGREEMENT</h4>
+                    <p class="mb-4">This Employment Agreement ("Agreement") is made and entered into as of [Date], by and between [Company Name], a [State] corporation ("Company"), and [Employee Name] ("Employee").</p>
+                    
+                    <h5 class="font-bold mt-4 mb-2 document-section" data-section="position">1. POSITION</h5>
+                    <p class="mb-4">Employee shall serve as [Job Title] and shall perform such duties as are customary for such position and as may be assigned by the Company.</p>
+                    
+                    <h5 class="font-bold mt-4 mb-2 document-section" data-section="compensation">2. COMPENSATION</h5>
+                    <p class="mb-4">Employee shall receive a base salary of $[Amount] per year, payable in accordance with the Company's standard payroll practices.</p>
+                    
+                    <h5 class="font-bold mt-4 mb-2 document-section" data-section="termination">3. TERMINATION</h5>
+                    <p class="mb-4">This Agreement may be terminated by either party upon [Number] days' written notice. The Company may terminate Employee immediately for cause, including but not limited to misconduct or poor performance.</p>
+                    
+                    <h5 class="font-bold mt-4 mb-2 document-section" data-section="non-compete">4. NON-COMPETE</h5>
+                    <p class="mb-4">Employee agrees not to engage in any business activity that competes with the Company during the term of employment and for [Number] months thereafter within a [Number]-mile radius of any Company location.</p>
+                    
+                    <h5 class="font-bold mt-4 mb-2 document-section" data-section="confidentiality">5. CONFIDENTIALITY</h5>
+                    <p class="mb-4">Employee shall not disclose any confidential information of the Company to any third party during or after employment.</p>
+                `,
+                analysis: {
+                    'position': 'Standard position description clause. No significant risks identified.',
+                    'compensation': 'Standard compensation terms. Verify that the amount matches your negotiation.',
+                    'termination': 'Potential risk: The termination clause allows immediate termination for "poor performance" without clear definition. Consider requesting more specific language.',
+                    'non-compete': 'High risk: The non-compete clause is very broad in scope (time and geography). This may be unenforceable in some jurisdictions or overly restrictive.',
+                    'confidentiality': 'Standard confidentiality clause. Ensure it aligns with your industry standards.'
+                }
+            },
+            'nda': {
+                title: 'Non-Disclosure Agreement',
+                content: `
+                    <h4 class="font-bold mb-2">NON-DISCLOSURE AGREEMENT</h4>
+                    <p class="mb-4">This Non-Disclosure Agreement ("Agreement") is made and entered into as of [Date] by and between [Disclosing Party] ("Disclosing Party") and [Receiving Party] ("Receiving Party").</p>
+                    
+                    <h5 class="font-bold mt-4 mb-2 document-section" data-section="definition">1. DEFINITION OF CONFIDENTIAL INFORMATION</h5>
+                    <p class="mb-4">Confidential Information shall include all non-public information disclosed by Disclosing Party to Receiving Party, whether in writing, orally, or by other means.</p>
+                    
+                    <h5 class="font-bold mt-4 mb-2 document-section" data-section="obligations">2. OBLIGATIONS OF RECEIVING PARTY</h5>
+                    <p class="mb-4">Receiving Party shall maintain Confidential Information in strict confidence and shall not disclose such information to any third party without prior written consent.</p>
+                    
+                    <h5 class="font-bold mt-4 mb-2 document-section" data-section="duration">3. DURATION</h5>
+                    <p class="mb-4">The obligations of confidentiality shall remain in effect for [Number] years from the date of disclosure.</p>
+                    
+                    <h5 class="font-bold mt-4 mb-2 document-section" data-section="exclusions">4. EXCLUSIONS</h5>
+                    <p class="mb-4">The obligations of confidentiality shall not apply to information that: (a) is or becomes publicly available; (b) was in Receiving Party's possession prior to disclosure; (c) is independently developed by Receiving Party.</p>
+                    
+                    <h5 class="font-bold mt-4 mb-2 document-section" data-section="remedies">5. REMEDIES</h5>
+                    <p class="mb-4">Disclosing Party shall be entitled to seek injunctive relief in addition to any other remedies available at law or in equity.</p>
+                `,
+                analysis: {
+                    'definition': 'Standard definition of confidential information. Ensure it covers all types of information you need protected.',
+                    'obligations': 'Standard confidentiality obligations. No significant issues.',
+                    'duration': 'Medium risk: The duration of [Number] years may be too long or too short depending on your industry. Typical durations are 2-5 years.',
+                    'exclusions': 'Standard exclusions. Ensure they cover all appropriate scenarios.',
+                    'remedies': 'Standard remedies clause. No significant issues.'
+                }
+            }
+        };
+
+        // Current document being analyzed
+        let currentDocument = null;
+        let currentDocumentType = null;
+
         // Mobile menu toggle
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
@@ -510,6 +505,11 @@
         const chatMessages = document.getElementById('chat-messages');
         const chatInput = document.getElementById('chat-input');
         const sendMessage = document.getElementById('send-message');
+        const uploadArea = document.getElementById('upload-area');
+        const contractUpload = document.getElementById('contract-upload');
+        const documentModal = document.getElementById('document-modal');
+        const documentPreview = document.getElementById('document-preview');
+        const closeDocumentModal = document.getElementById('close-document-modal');
 
         // Toggle chatbot visibility
         chatbotToggle.addEventListener('click', () => {
@@ -522,6 +522,194 @@
             chatbot.classList.add('hidden');
             chatbot.classList.remove('active');
         });
+
+        // Close document modal
+        closeDocumentModal.addEventListener('click', () => {
+            documentModal.classList.add('hidden');
+        });
+
+        // Upload area click handler
+        uploadArea.addEventListener('click', () => {
+            contractUpload.click();
+        });
+
+        // File upload handler
+        contractUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                // In a real app, you would upload the file to your server
+                // For this demo, we'll use a sample document
+                analyzeDocument('employment_agreement');
+            }
+        });
+
+        // Function to analyze a document
+        function analyzeDocument(docType) {
+            currentDocument = sampleDocuments[docType];
+            currentDocumentType = docType;
+            
+            // Add message about document being analyzed
+            const botMessage = document.createElement('div');
+            botMessage.className = 'message bot-message';
+            botMessage.innerHTML = `
+                I've analyzed the <strong>${currentDocument.title}</strong>. Here are the main sections:
+                ${Object.keys(currentDocument.analysis).map(section => 
+                    `<div class="document-part" data-section="${section}">${section.replace(/_/g, ' ').toUpperCase()}</div>`
+                ).join('')}
+                <p class="mt-2">Click on any section to get my analysis.</p>
+            `;
+            chatMessages.appendChild(botMessage);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Show document preview
+            documentPreview.innerHTML = currentDocument.content;
+            documentModal.classList.remove('hidden');
+            
+            // Add click handlers to document sections
+            document.querySelectorAll('.document-section').forEach(section => {
+                section.addEventListener('click', () => {
+                    const sectionId = section.getAttribute('data-section');
+                    showSectionAnalysis(sectionId);
+                });
+            });
+            
+            // Add click handlers to document parts in chat
+            document.querySelectorAll('.document-part').forEach(part => {
+                part.addEventListener('click', () => {
+                    const sectionId = part.getAttribute('data-section');
+                    showSectionAnalysis(sectionId);
+                    
+                    // Highlight the section in the document preview
+                    highlightSection(sectionId);
+                });
+            });
+        }
+
+        // Function to show analysis for a specific section
+        function showSectionAnalysis(sectionId) {
+            const sectionName = sectionId.replace(/_/g, ' ').toUpperCase();
+            const analysis = currentDocument.analysis[sectionId];
+            
+            // Add bot message with analysis
+            const botMessage = document.createElement('div');
+            botMessage.className = 'message bot-message';
+            botMessage.innerHTML = `
+                <strong>${sectionName}</strong> Analysis:
+                <p class="mt-2">${analysis}</p>
+                ${analysis.includes('risk') ? 
+                    '<div class="mt-3 p-2 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">' +
+                    '<p>This section may need attention. Would you like me to suggest alternative language?</p>' +
+                    '<div class="flex mt-2">' +
+                    '<button class="mr-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200" onclick="suggestAlternativeLanguage(\'' + sectionId + '\')">Yes, suggest changes</button>' +
+                    '<button class="px-3 py-1 bg-gray-100 text-gray-800 rounded hover:bg-gray-200" onclick="dismissSuggestion()">No, thanks</button>' +
+                    '</div>' +
+                    '</div>' : ''}
+            `;
+            chatMessages.appendChild(botMessage);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Function to highlight a section in the document preview
+        function highlightSection(sectionId) {
+            // Remove any existing highlights
+            document.querySelectorAll('.document-section').forEach(section => {
+                section.classList.remove('document-highlight');
+            });
+            
+            // Add highlight to the selected section
+            const section = document.querySelector(`.document-section[data-section="${sectionId}"]`);
+            if (section) {
+                section.classList.add('document-highlight');
+                section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // Function to suggest alternative language
+        function suggestAlternativeLanguage(sectionId) {
+            const sectionName = sectionId.replace(/_/g, ' ').toUpperCase();
+            let suggestion = '';
+            
+            if (sectionId === 'non-compete') {
+                suggestion = 'Consider limiting the non-compete to [Number] months and only for direct competitors in your specific industry. Geographic restrictions should be reasonable based on your actual business operations.';
+            } else if (sectionId === 'termination') {
+                suggestion = 'Suggest defining "poor performance" with measurable criteria (e.g., failure to meet 3 consecutive quarterly goals) and implementing a performance improvement plan before termination.';
+            } else {
+                suggestion = 'I recommend consulting with a legal professional to draft language that better suits your specific needs while remaining enforceable.';
+            }
+            
+            // Add bot message with suggestion
+            const botMessage = document.createElement('div');
+            botMessage.className = 'message bot-message';
+            botMessage.innerHTML = `
+                <strong>Suggested Improvement for ${sectionName}:</strong>
+                <p class="mt-2">${suggestion}</p>
+                <div class="mt-3 p-2 bg-blue-50 border-l-4 border-blue-400 text-blue-700">
+                    <p>Would you like me to generate a revised version of this clause?</p>
+                    <div class="flex mt-2">
+                        <button class="mr-2 px-3 py-1 bg-blue-100 text-blue-800 rounded hover:bg-blue-200" onclick="generateRevisedClause('${sectionId}')">Yes, generate revision</button>
+                        <button class="px-3 py-1 bg-gray-100 text-gray-800 rounded hover:bg-gray-200" onclick="dismissSuggestion()">No, thanks</button>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(botMessage);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Function to generate a revised clause
+        function generateRevisedClause(sectionId) {
+            const sectionName = sectionId.replace(/_/g, ' ').toUpperCase();
+            let revisedClause = '';
+            
+            if (sectionId === 'non-compete') {
+                revisedClause = `
+                    <p><strong>4. NON-COMPETE</strong></p>
+                    <p>Employee agrees not to engage in any business activity that directly competes with the Company's core business during the term of employment and for 6 months thereafter within a 25-mile radius of any Company location where Employee worked for at least 6 months.</p>
+                `;
+            } else if (sectionId === 'termination') {
+                revisedClause = `
+                    <p><strong>3. TERMINATION</strong></p>
+                    <p>This Agreement may be terminated by either party upon 30 days' written notice. The Company may terminate Employee immediately for cause, defined as: (a) willful misconduct; (b) material breach of this Agreement; (c) conviction of a felony; or (d) after 3 consecutive months of documented poor performance following implementation of a performance improvement plan.</p>
+                `;
+            } else {
+                revisedClause = `
+                    <p><strong>${sectionName}</strong></p>
+                    <p>[Revised clause would appear here based on your specific requirements]</p>
+                `;
+            }
+            
+            // Add bot message with revised clause
+            const botMessage = document.createElement('div');
+            botMessage.className = 'message bot-message';
+            botMessage.innerHTML = `
+                <strong>Revised ${sectionName} Clause:</strong>
+                <div class="mt-2 p-3 bg-gray-100 rounded">${revisedClause}</div>
+                <div class="mt-3 p-2 bg-green-50 border-l-4 border-green-400 text-green-700">
+                    <p>You can copy this language and propose it for your contract negotiations.</p>
+                </div>
+            `;
+            chatMessages.appendChild(botMessage);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Function to dismiss suggestion
+        function dismissSuggestion() {
+            // Just scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Function to send quick reply
+        function sendQuickReply(text) {
+            chatInput.value = text;
+            sendUserMessage();
+        }
 
         // Send message function
         function sendUserMessage() {
@@ -577,26 +765,46 @@
             }
         });
 
-        // Simple bot responses
+        // Enhanced bot responses with document analysis
         function getBotResponse(message) {
             const lowerMessage = message.toLowerCase();
             
-            if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-                return "Hello! How can I assist you with your contracts today?";
+            if (lowerMessage.includes('upload') || lowerMessage.includes('analyze') || lowerMessage.includes('review')) {
+                return `Please upload your contract document using the upload button above. For now, I can analyze a sample document for you: 
+                    <div class="mt-3">
+                        <button class="px-4 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200 mr-2" onclick="analyzeDocument('employment_agreement')">Analyze Employment Agreement</button>
+                        <button class="px-4 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200" onclick="analyzeDocument('nda')">Analyze NDA</button>
+                    </div>`;
+            } else if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+                return "Hello! I'm your ContractGuard AI Assistant. How can I help you with your contracts today?";
             } else if (lowerMessage.includes('risk') || lowerMessage.includes('danger')) {
-                return "I can help identify risks in your contracts. Please upload your document or describe the clause you're concerned about.";
+                return "I can help identify risks in your contracts. Common risk areas include termination clauses, non-compete agreements, and liability limitations. Would you like me to analyze a specific document?";
             } else if (lowerMessage.includes('nda') || lowerMessage.includes('non-disclosure')) {
-                return "NDAs typically contain confidentiality clauses, duration terms, and scope definitions. Would you like me to review a specific NDA for you?";
+                return "NDAs typically contain confidentiality clauses, duration terms, and scope definitions. Key things to check: <ul class='list-disc pl-5 mt-2'><li>Is the duration reasonable (2-5 years is typical)?</li><li>Is the definition of confidential information sufficiently broad?</li><li>Are there appropriate exclusions?</li></ul> Would you like me to analyze an NDA for you?";
             } else if (lowerMessage.includes('termination') || lowerMessage.includes('end')) {
-                return "Termination clauses specify how and when a contract can be ended. They often include notice periods and conditions. Would you like me to analyze a specific termination clause?";
+                return "Termination clauses specify how and when a contract can be ended. They often include notice periods and conditions. Watch for: <ul class='list-disc pl-5 mt-2'><li>Unreasonably short notice periods</li><li>Vague definitions of 'cause' for termination</li><li>One-sided termination rights</li></ul> Would you like to review a specific termination clause?";
+            } else if (lowerMessage.includes('non-compete') || lowerMessage.includes('competition')) {
+                return "Non-compete clauses restrict your ability to work with competitors after leaving a company. Key considerations: <ul class='list-disc pl-5 mt-2'><li>Duration (6-12 months is typical)</li><li>Geographic scope (should be reasonable)</li><li>Scope of restricted activities (should be narrowly defined)</li></ul> These clauses are often heavily negotiated and may be unenforceable if too broad.";
             } else if (lowerMessage.includes('thank') || lowerMessage.includes('thanks')) {
                 return "You're welcome! Let me know if you have any other questions about your contracts.";
             } else if (lowerMessage.includes('help') || lowerMessage.includes('support')) {
-                return "I can help with contract analysis, clause explanations, risk identification, and more. What specific assistance do you need?";
+                return "I can help with: <ul class='list-disc pl-5 mt-2'><li>Contract analysis and risk assessment</li><li>Clause explanations</li><li>Suggested improvements</li><li>Legal term definitions</li></ul> What specific assistance do you need?";
+            } else if (lowerMessage.includes('confidential') || lowerMessage.includes('secret')) {
+                return "Confidentiality clauses protect sensitive information. Important aspects: <ul class='list-disc pl-5 mt-2'><li>Clear definition of what's considered confidential</li><li>Obligations of the receiving party</li><li>Duration of confidentiality obligations</li><li>Permitted disclosures (e.g., to attorneys, by court order)</li></ul> Would you like me to review a specific confidentiality clause?";
+            } else if (lowerMessage.includes('liability') || lowerMessage.includes('damage')) {
+                return "Liability clauses define responsibility for damages. Watch for: <ul class='list-disc pl-5 mt-2'><li>Limitations on liability amounts</li><li>Exclusions of consequential damages</li><li>One-sided liability provisions</li></ul> These clauses can significantly impact your legal rights.";
             } else {
-                return "I'm an AI trained to help with contract analysis. Could you provide more details about your question or upload the contract you'd like me to review?";
+                return "I'm an AI trained to help with contract analysis. Could you provide more details about your question or upload the contract you'd like me to review? Here are some things I can help with: <ul class='list-disc pl-5 mt-2'><li>Explain specific contract clauses</li><li>Identify potential risks in your contracts</li><li>Suggest improvements to contract language</li><li>Answer questions about common contract terms</li></ul>";
             }
         }
+
+        // Make functions available globally
+        window.sendQuickReply = sendQuickReply;
+        window.analyzeDocument = analyzeDocument;
+        window.suggestAlternativeLanguage = suggestAlternativeLanguage;
+        window.generateRevisedClause = generateRevisedClause;
+        window.dismissSuggestion = dismissSuggestion;
     </script>
-<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=fenime/migrantshield" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
+
+</body>
 </html>
