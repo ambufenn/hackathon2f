@@ -1,12 +1,13 @@
 import streamlit as st
 from model import generate_response
 from io import BytesIO
-import textract  # untuk PDF/DOCX/TXT
+import textract
+from PIL import Image
+import easyocr
 
 st.set_page_config(page_title="SEA-LION Chatbot", page_icon="🦁")
 st.title("🦁 SEA-LION Chatbot (Gemma v3-9B-IT)")
 
-# Simpan riwayat chat
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -15,16 +16,24 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Upload file section
-st.subheader("Upload Contract File (PDF, DOCX, TXT)")
-uploaded_file = st.file_uploader("Pilih file...", type=["pdf", "docx", "txt"])
+# Upload file
+st.subheader("Upload File (PDF, DOCX, TXT, JPG, PNG, JPEG)")
+uploaded_file = st.file_uploader("Pilih file...", type=["pdf", "docx", "txt", "png", "jpg", "jpeg"])
 
 extracted_text = ""
 if uploaded_file:
     st.info(f"Memproses file: {uploaded_file.name}")
+    file_type = uploaded_file.type
     uploaded_file.seek(0)
     try:
-        extracted_text = textract.process(uploaded_file).decode("utf-8")
+        if "image" in file_type:
+            # OCR dengan easyocr
+            reader = easyocr.Reader(['en'])
+            image = Image.open(BytesIO(uploaded_file.read()))
+            result = reader.readtext(image, detail=0)
+            extracted_text = "\n".join(result)
+        else:
+            extracted_text = textract.process(uploaded_file).decode("utf-8")
         st.text_area("Extracted Text:", extracted_text, height=200)
     except Exception as e:
         st.error(f"Gagal mengekstrak teks: {e}")
