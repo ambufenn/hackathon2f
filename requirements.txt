@@ -4,3 +4,4 @@ pillow
 pytesseract
 textract
 easyocr
+torch 
