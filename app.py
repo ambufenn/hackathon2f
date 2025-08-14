@@ -38,7 +38,7 @@ for msg in st.session_state.messages:
 
 # Upload file
 st.subheader("Upload File (PDF, DOCX, TXT, JPG, PNG, JPEG)")
-uploaded_file = st.file_uploader("Pilih file...", type=["pdf", "docx", "txt", "png", "jpg", "jpeg"])
+uploaded_file = st.file_uploader("Pilih file...", type=["png", "jpg", "jpeg"])
 
 extracted_text = ""
 if uploaded_file:
