@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ContractGuard - AI Contract Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        }
+        .contract-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        .contract-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .risk-high {
+            border-left-color: #ef4444;
+        }
+        .risk-medium {
+            border-left-color: #f59e0b;
+        }
+        .risk-low {
+            border-left-color: #10b981;
+        }
+        .loading-bar {
+            animation: loading 1.5s ease-in-out infinite;
+        }
+        @keyframes loading {
+            0% { width: 0%; left: 0; }
+            50% { width: 100%; left: 0; }
+            100% { width: 0%; left: 100%; }
+        }
+        .chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .chatbot {
+            width: 350px;
+            height: 500px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        .chatbot.active {
+            transform: translateY(0);
+        }
+        .chatbot-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: auto;
+        }
+        .chat-messages {
+            height: 380px;
+            overflow-y: auto;
+        }
+        .chat-input {
+            border-top: 1px solid #e5e7eb;
+        }
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            margin-bottom: 10px;
+        }
+        .user-message {
+            background-color: #3b82f6;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+        .bot-message {
+            background-color: #f3f4f6;
+            color: #111827;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .floating-alert {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            z-index: 1000;
+            animation: slideIn 0.5s forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        .mobile-menu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .mobile-menu.active {
+            max-height: 500px;
+        }
+        .typing-indicator {
+            display: flex;
+            padding: 10px 15px;
+            background-color: #f3f4f6;
+            border-radius: 18px;
+            margin-right: auto;
+            margin-bottom: 10px;
+            width: fit-content;
+        }
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #6b7280;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50 min-h-screen">
+    <!-- Header/Nav -->
+    <header class="gradient-bg text-white shadow-md">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <i class="fas fa-file-contract text-2xl mr-2"></i>
+                    <h1 class="text-xl font-bold">ContractGuard</h1>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="#" class="hover:text-blue-200 transition">Home</a>
+                    <a href="#" class="hover:text-blue-200 transition">How It Works</a>
+                    <a href="#" class="hover:text-blue-200 transition">About</a>
+                    <a href="#" class="hover:text-blue-200 transition">Resources</a>
+                </nav>
+                <div class="flex items-center space-x-4">
+                    <button class="bg-white text-blue-600 px-4 py-2 rounded-md font-medium hover:bg-blue-50 transition">
+                        Sign In
+                    </button>
+                    <button class="md:hidden text-white text-xl" id="mobile-menu-button">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Mobile Menu -->
+            <div class="mobile-menu md:hidden bg-blue-800 rounded-md" id="mobile-menu">
+                <div class="flex flex-col space-y-2 p-4">
+                    <a href="#" class="hover:text-blue-200 transition">Home</a>
+                    <a href="#" class="hover:text-blue-200 transition">How It Works</a>
+                    <a href="#" class="hover:text-blue-200 transition">About</a>
+                    <a href="#" class="hover:text-blue-200 transition">Resources</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="gradient-bg text-white py-16">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
+            <div class="md:w-1/2 mb-8 md:mb-0">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">AI-Powered Contract Analysis</h1>
+                <p class="text-xl mb-6">Identify risks, understand clauses, and get actionable insights in seconds with our advanced AI technology.</p>
+                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                    <button class="bg-white text-blue-600 px-6 py-3 rounded-md font-medium hover:bg-blue-50 transition">
+                        Analyze Your Contract
+                    </button>
+                    <button class="bg-transparent border-2 border-white text-white px-6 py-3 rounded-md font-medium hover:bg-white hover:text-blue-600 transition">
+                        How It Works
+                    </button>
+                </div>
+            </div>
+            <div class="md:w-1/2 flex justify-center">
+                <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+                    <div class="text-gray-800 mb-4">
+                        <h3 class="text-xl font-bold mb-2">Upload Your Contract</h3>
+                        <p class="text-gray-600">Supported formats: PDF, DOCX, TXT</p>
+                    </div>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-blue-500 mb-2"></i>
+                        <p class="text-gray-600">Drag & drop your file here or click to browse</p>
+                        <input type="file" class="hidden" id="contract-upload">
+                    </div>
+                    <div class="mt-4 text-sm text-gray-500">
+                        <p>By uploading, you agree to our <a href="#" class="text-blue-500 hover:underline">Terms of Service</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">Key Features</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-gray-50 p-6 rounded-lg shadow-sm hover:shadow-md transition">
+                    <div class="text-blue-500 text-3xl mb-4">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Risk Detection</h3>
+                    <p class="text-gray-600">Our AI identifies potential risks and unfavorable clauses in your contracts.</p>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg shadow-sm hover:shadow-md transition">
+                    <div class="text-blue-500 text-3xl mb-4">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Smart Suggestions</h3>
+                    <p class="text-gray-600">Get recommendations for contract improvements based on industry standards.</p>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg shadow-sm hover:shadow-md transition">
+                    <div class="text-blue-500 text-3xl mb-4">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Performance Tracking</h3>
+                    <p class="text-gray-600">Monitor how your contracts perform over time with detailed analytics.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Contracts Section -->
+    <section class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold">Recent Contracts</h2>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                    <i class="fas fa-plus mr-2"></i> New Analysis
+                </button>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Contract Card 1 -->
+                <div class="contract-card risk-high bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="font-bold text-lg">Employment Agreement</h3>
+                            <p class="text-gray-500 text-sm">Analyzed 2 days ago</p>
+                        </div>
+                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">High Risk</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">Identified 3 high-risk clauses including non-compete and termination terms.</p>
+                    <div class="flex justify-between items-center">
+                        <div class="flex space-x-2">
+                            <span class="bg-gray-100 px-2 py-1 rounded-full text-xs">Employment</span>
+                            <span class="bg-gray-100 px-2 py-1 rounded-full text-xs">Legal</span>
+                        </div>
+                        <button class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Contract Card 2 -->
+                <div class="contract-card risk-medium bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="font-bold text-lg">NDA with TechCorp</h3>
+                            <p class="text-gray-500 text-sm">Analyzed 1 week ago</p>
+                        </div>
+                        <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">Medium Risk</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">2 clauses need attention regarding confidentiality duration and scope.</p>
+                    <div class="flex justify-between items-center">
+                        <div class="flex space-x-2">
+                            <span class="bg-gray-100 px-2 py-1 rounded-full text-xs">NDA</span>
+                            <span class="bg-gray-100 px-2 py-1 rounded-full text-xs">Business</span>
+                        </div>
+                        <button class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Contract Card 3 -->
+                <div class="contract-card risk-low bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="font-bold text-lg">Service Agreement</h3>
+                            <p class="text-gray-500 text-sm">Analyzed 2 weeks ago</p>
+                        </div>
+                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Low Risk</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">Standard terms with no significant issues detected.</p>
+                    <div class="flex justify-between items-center">
+                        <div class="flex space-x-2">
+                            <span class="bg-gray-100 px-2 py-1 rounded-full text-xs">Service</span>
+                            <span class="bg-gray-100 px-2 py-1 rounded-full text-xs">Agreement</span>
+                        </div>
+                        <button class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">What Our Clients Say</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                    <div class="flex items-center mb-4">
+                        <div class="text-yellow-400 text-xl mr-2">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-4">"ContractGuard saved us from signing a terrible lease agreement. The AI flagged several hidden clauses that would have cost us thousands."</p>
+                    <div class="flex items-center">
+                        <div class="bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                            JD
+                        </div>
+                        <div>
+                            <h4 class="font-bold">John D.</h4>
+                            <p class="text-gray-500 text-sm">Small Business Owner</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                    <div class="flex items-center mb-4">
+                        <div class="text-yellow-400 text-xl mr-2">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-4">"As a solo entrepreneur, I don't have a legal team. ContractGuard gives me the confidence to review contracts myself."</p>
+                    <div class="flex items-center">
+                        <div class="bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                            SM
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Sarah M.</h4>
+                            <p class="text-gray-500 text-sm">Freelance Consultant</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                    <div class="flex items-center mb-4">
+                        <div class="text-yellow-400 text-xl mr-2">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mb-4">"Our legal team uses ContractGuard to handle the initial review of all contracts. It saves us hours of work each week."</p>
+                    <div class="flex items-center">
+                        <div class="bg-blue-500 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                            AL
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Alex L.</h4>
+                            <p class="text-gray-500 text-sm">Legal Director</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="gradient-bg text-white py-16">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold mb-6">Ready to Analyze Your Contracts?</h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">Join thousands of businesses who trust ContractGuard for their contract analysis needs.</p>
+            <button class="bg-white text-blue-600 px-8 py-3 rounded-md font-medium hover:bg-blue-50 transition text-lg">
+                Get Started for Free
+            </button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-file-contract text-2xl mr-2"></i>
+                        ContractGuard
+                    </h3>
+                    <p class="text-gray-400">AI-powered contract analysis for businesses of all sizes.</p>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Product</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Features</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Pricing</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">API</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Integrations</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Resources</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Documentation</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Guides</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Blog</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Support</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Company</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">About</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Careers</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Privacy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Terms</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>© 2023 ContractGuard. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Chatbot -->
+    <div class="chatbot-container">
+        <div class="chatbot bg-white hidden" id="chatbot">
+            <div class="bg-blue-600 text-white p-4 flex items-center">
+                <div class="flex items-center">
+                    <div class="bg-white text-blue-600 rounded-full w-8 h-8 flex items-center justify-center mr-2">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3 class="font-bold">ContractGuard AI Assistant</h3>
+                </div>
+                <button class="ml-auto text-white hover:text-blue-200" id="close-chatbot">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="chat-messages p-4" id="chat-messages">
+                <div class="bot-message message">
+                    Hello! I'm your ContractGuard AI Assistant. How can I help you with your contracts today?
+                </div>
+                <div class="bot-message message">
+                    Here are some things I can help with:
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>Explain contract clauses</li>
+                        <li>Identify potential risks</li>
+                        <li>Suggest improvements</li>
+                        <li>Answer legal questions</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="chat-input p-4 bg-gray-50">
+                <div class="flex">
+                    <input type="text" placeholder="Type your message..." class="flex-grow px-4 py-2 rounded-l-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="chat-input">
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded-r-md hover:bg-blue-700 transition" id="send-message">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <button class="chatbot-toggle bg-blue-600 text-white shadow-lg pulse hover:bg-blue-700 transition" id="chatbot-toggle">
+            <i class="fas fa-comment-dots text-xl"></i>
+        </button>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('active');
+        });
+
+        // Chatbot functionality
+        const chatbotToggle = document.getElementById('chatbot-toggle');
+        const chatbot = document.getElementById('chatbot');
+        const closeChatbot = document.getElementById('close-chatbot');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const sendMessage = document.getElementById('send-message');
+
+        // Toggle chatbot visibility
+        chatbotToggle.addEventListener('click', () => {
+            chatbot.classList.toggle('hidden');
+            chatbot.classList.toggle('active');
+        });
+
+        // Close chatbot
+        closeChatbot.addEventListener('click', () => {
+            chatbot.classList.add('hidden');
+            chatbot.classList.remove('active');
+        });
+
+        // Send message function
+        function sendUserMessage() {
+            const message = chatInput.value.trim();
+            if (message === '') return;
+            
+            // Add user message to chat
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message user-message';
+            userMessage.textContent = message;
+            chatMessages.appendChild(userMessage);
+            
+            // Clear input
+            chatInput.value = '';
+            
+            // Show typing indicator
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'typing-indicator';
+            typingIndicator.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            `;
+            chatMessages.appendChild(typingIndicator);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Simulate bot response after delay
+            setTimeout(() => {
+                // Remove typing indicator
+                chatMessages.removeChild(typingIndicator);
+                
+                // Add bot response
+                const botResponse = getBotResponse(message);
+                const botMessage = document.createElement('div');
+                botMessage.className = 'message bot-message';
+                botMessage.innerHTML = botResponse;
+                chatMessages.appendChild(botMessage);
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 1500);
+        }
+
+        // Send message on button click
+        sendMessage.addEventListener('click', sendUserMessage);
+        
+        // Send message on Enter key
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendUserMessage();
+            }
+        });
+
+        // Simple bot responses
+        function getBotResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+                return "Hello! How can I assist you with your contracts today?";
+            } else if (lowerMessage.includes('risk') || lowerMessage.includes('danger')) {
+                return "I can help identify risks in your contracts. Please upload your document or describe the clause you're concerned about.";
+            } else if (lowerMessage.includes('nda') || lowerMessage.includes('non-disclosure')) {
+                return "NDAs typically contain confidentiality clauses, duration terms, and scope definitions. Would you like me to review a specific NDA for you?";
+            } else if (lowerMessage.includes('termination') || lowerMessage.includes('end')) {
+                return "Termination clauses specify how and when a contract can be ended. They often include notice periods and conditions. Would you like me to analyze a specific termination clause?";
+            } else if (lowerMessage.includes('thank') || lowerMessage.includes('thanks')) {
+                return "You're welcome! Let me know if you have any other questions about your contracts.";
+            } else if (lowerMessage.includes('help') || lowerMessage.includes('support')) {
+                return "I can help with contract analysis, clause explanations, risk identification, and more. What specific assistance do you need?";
+            } else {
+                return "I'm an AI trained to help with contract analysis. Could you provide more details about your question or upload the contract you'd like me to review?";
+            }
+        }
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=fenime/migrantshield" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
+</html>
