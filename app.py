@@ -15,13 +15,18 @@ for msg in st.session_state.messages:
 
 # Input user
 if prompt := st.chat_input("Ketik pesan..."):
+    # Simpan pesan user
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # Jawaban dari AI
     with st.chat_message("assistant"):
         with st.spinner("Menulis..."):
-            response = generate_response(prompt)
+            try:
+                response = generate_response(prompt)
+            except RuntimeError as e:
+                response = f"⚠️ {e}"
             st.markdown(response)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
