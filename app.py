@@ -4,7 +4,7 @@ from model import generate_response
 st.set_page_config(page_title="SEA-LION Chatbot", page_icon="🤖")
 st.title("🤖 SEA-LION Chatbot")
 
-# Simpan riwayat chat
+# Simpan riwayat chat di session_state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -20,7 +20,7 @@ if prompt := st.chat_input("Ketik pesan..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Jawaban dari AI
+    # Jawaban AI
     with st.chat_message("assistant"):
         with st.spinner("Menulis..."):
             try:
