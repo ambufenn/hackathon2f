@@ -10,10 +10,13 @@ st.set_page_config(page_title="SEA-LION Chatbot", page_icon="🦁")
 st.title("🦁 SEA-LION Chatbot (Gemma v3-9B-IT)")
 
 # ===== Fungsi Analisis =====
-def summarize_text(text: str) -> str:
-    lines = text.split("\n")
-    summary = " ".join(lines[:5])
-    return summary
+def summarize_text_ai(text: str) -> str:
+    prompt = f"""
+Berikan ringkasan yang jelas dan singkat dari teks dokumen berikut:
+{text[:2000]}  # batasi supaya tidak terlalu panjang
+Ringkasan sebaiknya fokus pada isi penting dan mengabaikan header/footer.
+"""
+    return generate_response(prompt)
 
 def detect_risk(text: str) -> list:
     risk_keywords = ["penalty", "liability", "deadline", "fine"]
@@ -38,7 +41,7 @@ for msg in st.session_state.messages:
 
 # Upload file
 st.subheader("Upload File (PDF, DOCX, TXT, JPG, PNG, JPEG)")
-uploaded_file = st.file_uploader("Pilih file...", type=["png", "jpg", "jpeg"])
+uploaded_file = st.file_uploader("Pilih file...", type=["pdf", "docx", "txt", "png", "jpg", "jpeg"])
 
 extracted_text = ""
 if uploaded_file:
@@ -57,12 +60,12 @@ if uploaded_file:
                 tmp_file.write(uploaded_file.read())
                 tmp_file_path = tmp_file.name
 
-            extracted_text = textract.process(tmp_file_path).decode("utf-8")
+            extracted_text = textract.process(tmp_file_path).decode("utf-8", errors="ignore")
 
         st.text_area("Extracted Text:", extracted_text, height=200)
 
         # ===== Analisis tambahan =====
-        analysis = summarize_text(extracted_text)
+        analysis = summarize_text_ai(extracted_text)  # pakai AI
         risks = detect_risk(extracted_text)
         suggestions = smart_suggestions(extracted_text)
 
@@ -73,7 +76,7 @@ if uploaded_file:
 
         # ===== Gabungkan ke prompt SEA-LION =====
         prompt_to_model = f"""
-Berikut teks dokumen: {extracted_text[:1000]}  # batasi supaya tidak terlalu panjang
+Berikut teks dokumen: {extracted_text[:1000]}
 Ringkasan: {analysis}
 Risiko terdeteksi: {', '.join(risks) if risks else 'Tidak ada'}
 Saran: {', '.join(suggestions) if suggestions else 'Tidak ada'}
