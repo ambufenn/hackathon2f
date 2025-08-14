@@ -1,34 +1,29 @@
 import os
-import requests
-import streamlit as st
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
-# Ambil token dari secrets
-HF_TOKEN = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
+HF_TOKEN = os.environ.get("HUGGINGFACEHUB_API_TOKEN")
+MODEL_NAME = "aisingapore/SEA-LION-v1-3B"
 
-# Nama model SEA-LION
-MODEL_NAME = "panji-pansear/sea-lion-7b-instruct"
+def load_model():
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(
+            MODEL_NAME,
+            use_auth_token=HF_TOKEN
+        )
+        model = AutoModelForCausalLM.from_pretrained(
+            MODEL_NAME,
+            use_auth_token=HF_TOKEN,
+            torch_dtype=torch.float16,
+            device_map="auto"
+        )
+        return tokenizer, model
+    except Exception as e:
+        raise RuntimeError(f"Gagal load model {MODEL_NAME}: {e}")
 
-API_URL = f"https://api-inference.huggingface.co/models/{MODEL_NAME}"
-HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
-
-def query(payload: dict) -> dict:
-    """Kirim request ke Hugging Face Inference API"""
-    response = requests.post(API_URL, headers=HEADERS, json=payload)
-    if response.status_code != 200:
-        raise RuntimeError(f"API Error {response.status_code}: {response.text}")
-    return response.json()
+tokenizer, model = load_model()
 
 def generate_response(prompt: str) -> str:
-    """Generate respons dari SEA-LION"""
-    output = query({
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 200,
-            "temperature": 0.7,
-            "top_p": 0.9
-        }
-    })
-    # Output dari HF API biasanya list of dict
-    if isinstance(output, list) and "generated_text" in output[0]:
-        return output[0]["generated_text"]
-    return str(output)
+    inputs = tokenizer(prompt, return_tensors="pt", truncation=True).to(model.device)
+    outputs = model.generate(**inputs, max_new_tokens=150)
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
