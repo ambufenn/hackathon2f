@@ -4,6 +4,7 @@ from io import BytesIO
 import textract
 from PIL import Image
 import easyocr
+import tempfile
 
 st.set_page_config(page_title="SEA-LION Chatbot", page_icon="🦁")
 st.title("🦁 SEA-LION Chatbot (Gemma v3-9B-IT)")
@@ -43,7 +44,6 @@ extracted_text = ""
 if uploaded_file:
     st.info(f"Memproses file: {uploaded_file.name}")
     file_type = uploaded_file.type
-    uploaded_file.seek(0)
     try:
         if "image" in file_type:
             # OCR dengan easyocr
@@ -52,7 +52,13 @@ if uploaded_file:
             result = reader.readtext(image, detail=0)
             extracted_text = "\n".join(result)
         else:
-            extracted_text = textract.process(uploaded_file).decode("utf-8")
+            # Simpan file sementara untuk textract
+            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+                tmp_file.write(uploaded_file.read())
+                tmp_file_path = tmp_file.name
+
+            extracted_text = textract.process(tmp_file_path).decode("utf-8")
+
         st.text_area("Extracted Text:", extracted_text, height=200)
 
         # ===== Analisis tambahan =====
