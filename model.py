@@ -26,5 +26,12 @@ def load_pipeline():
 text_gen = load_pipeline()
 
 def generate_response(prompt: str) -> str:
-    result = text_gen(prompt, max_length=200, num_return_sequences=1)
+    result = text_gen(
+        prompt,
+        max_new_tokens=200,  # ganti max_length dengan max_new_tokens
+        num_return_sequences=1,
+        do_sample=True,
+        temperature=0.7,
+        top_p=0.9
+    )
     return result[0]["generated_text"]
