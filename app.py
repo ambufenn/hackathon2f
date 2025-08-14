@@ -8,6 +8,25 @@ import easyocr
 st.set_page_config(page_title="SEA-LION Chatbot", page_icon="🦁")
 st.title("🦁 SEA-LION Chatbot (Gemma v3-9B-IT)")
 
+# ===== Fungsi Analisis =====
+def summarize_text(text: str) -> str:
+    lines = text.split("\n")
+    summary = " ".join(lines[:5])
+    return summary
+
+def detect_risk(text: str) -> list:
+    risk_keywords = ["penalty", "liability", "deadline", "fine"]
+    return [kw for kw in risk_keywords if kw.lower() in text.lower()]
+
+def smart_suggestions(text: str) -> list:
+    suggestions = []
+    if "deadline" in text.lower():
+        suggestions.append("Periksa tanggal tenggat dan buat reminder.")
+    if "liability" in text.lower():
+        suggestions.append("Pastikan ada klausul proteksi risiko.")
+    return suggestions
+# ===============================
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -35,17 +54,42 @@ if uploaded_file:
         else:
             extracted_text = textract.process(uploaded_file).decode("utf-8")
         st.text_area("Extracted Text:", extracted_text, height=200)
+
+        # ===== Analisis tambahan =====
+        analysis = summarize_text(extracted_text)
+        risks = detect_risk(extracted_text)
+        suggestions = smart_suggestions(extracted_text)
+
+        st.subheader("Summary / Risk / Suggestions")
+        st.write("Ringkasan:", analysis)
+        st.write("Risiko terdeteksi:", risks if risks else "Tidak ada")
+        st.write("Saran:", suggestions if suggestions else "Tidak ada")
+
+        # ===== Gabungkan ke prompt SEA-LION =====
+        prompt_to_model = f"""
+Berikut teks dokumen: {extracted_text[:1000]}  # batasi supaya tidak terlalu panjang
+Ringkasan: {analysis}
+Risiko terdeteksi: {', '.join(risks) if risks else 'Tidak ada'}
+Saran: {', '.join(suggestions) if suggestions else 'Tidak ada'}
+
+Berikan insight tambahan atau smart suggestion berdasarkan ini.
+"""
+        response = generate_response(prompt_to_model)
+
+        st.subheader("SEA-LION Response")
+        st.write(response)
+
     except Exception as e:
         st.error(f"Gagal mengekstrak teks: {e}")
 
-# Input user
+# Input user manual
 prompt = st.chat_input("Ketik pesan atau gunakan teks dari file...")
 
 # Tombol pakai teks file
 if extracted_text and st.button("Gunakan teks dari file"):
     prompt = extracted_text
 
-# Proses chat
+# Proses chat manual
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
