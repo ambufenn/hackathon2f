@@ -6,4 +6,4 @@ textract
 easyocr
 torch 
 pandas
-
+six
