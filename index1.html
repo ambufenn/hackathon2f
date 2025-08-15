@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEA-LION Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .chat-container {
+            height: calc(100vh - 180px);
+        }
+        @media (max-width: 768px) {
+            .chat-container {
+                height: calc(100vh - 220px);
+            }
+        }
+        .file-upload-label {
+            transition: all 0.3s ease;
+        }
+        .file-upload-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .typing-indicator::after {
+            content: "...";
+            animation: typing 1.5s infinite;
+        }
+        @keyframes typing {
+            0% { content: "."; }
+            33% { content: ".."; }
+            66% { content: "..."; }
+        }
+        .risk-tag {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto max-w-6xl p-4">
+        <!-- Header -->
+        <header class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-3">
+                <div class="bg-yellow-400 p-3 rounded-full">
+                    <i class="fas fa-lion text-2xl text-yellow-800"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">SEA-LION Chatbot</h1>
+                    <p class="text-sm text-gray-600">Powered by Gemma v3-9B-IT</p>
+                </div>
+            </div>
+            <div class="hidden md:block">
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">Beta</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- File Upload Section -->
+            <div class="p-6 border-b">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Upload Document</h2>
+                <div class="space-y-4">
+                    <label class="file-upload-label flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                            <p class="mb-2 text-sm text-gray-500">Click to upload or drag and drop</p>
+                            <p class="text-xs text-gray-500">PDF, DOCX, TXT, PNG, JPG (Max 10MB)</p>
+                        </div>
+                        <input id="file-upload" type="file" class="hidden" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg">
+                    </label>
+                    <div id="file-info" class="hidden text-sm text-gray-600"></div>
+                </div>
+            </div>
+
+            <!-- Extracted Content Section -->
+            <div id="extracted-content" class="hidden p-6 border-b">
+                <div class="mb-6">
+                    <h3 class="font-medium text-gray-700 mb-2">Extracted Text</h3>
+                    <div id="extracted-text" class="bg-gray-50 p-4 rounded-lg h-48 overflow-y-auto text-sm text-gray-700"></div>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-blue-800 mb-2">Summary</h3>
+                        <div id="summary" class="text-sm text-blue-700"></div>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-red-800 mb-2">Detected Risks</h3>
+                        <div id="risks" class="text-sm text-red-700"></div>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-green-800 mb-2">Smart Suggestions</h3>
+                        <div id="suggestions" class="text-sm text-green-700"></div>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-purple-50 p-4 rounded-lg">
+                    <h3 class="font-medium text-purple-800 mb-2">SEA-LION Insights</h3>
+                    <div id="insights" class="text-sm text-purple-700"></div>
+                </div>
+            </div>
+
+            <!-- Chat Section -->
+            <div class="p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Chat with SEA-LION</h2>
+                
+                <!-- Chat Messages -->
+                <div id="chat-messages" class="chat-container overflow-y-auto mb-4 space-y-4">
+                    <!-- Messages will appear here -->
+                </div>
+                
+                <!-- Chat Input -->
+                <div class="flex items-center space-x-2">
+                    <input id="chat-input" type="text" placeholder="Type your message..." class="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                    <button id="send-button" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full w-10 h-10 flex items-center justify-center transition-colors">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-6 text-center text-sm text-gray-500">
+            <p>SEA-LION Chatbot © 2023 | Powered by Gemma AI</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // File upload handling
+            const fileUpload = document.getElementById('file-upload');
+            const fileInfo = document.getElementById('file-info');
+            const extractedContent = document.getElementById('extracted-content');
+            const extractedText = document.getElementById('extracted-text');
+            const summary = document.getElementById('summary');
+            const risks = document.getElementById('risks');
+            const suggestions = document.getElementById('suggestions');
+            const insights = document.getElementById('insights');
+            
+            // Chat elements
+            const chatMessages = document.getElementById('chat-messages');
+            const chatInput = document.getElementById('chat-input');
+            const sendButton = document.getElementById('send-button');
+            
+            // Mock data for demonstration
+            const mockExtractedText = "This is a sample contract document between Company A and Company B. The contract specifies a deadline of 30 days for delivery of services. Failure to meet this deadline will result in a penalty of $10,000 per day. The contract also includes liability clauses protecting both parties from unforeseen circumstances.";
+            const mockSummary = "Contract between Company A and B with 30-day delivery deadline and $10k/day penalty for delays, including liability protections.";
+            const mockRisks = ["deadline", "penalty", "liability"];
+            const mockSuggestions = ["Check the deadline date and set reminders.", "Ensure there are risk protection clauses."];
+            const mockInsights = "The contract appears standard but the penalty amount is significant. Consider negotiating a grace period or reduced penalty for minor delays. The liability clauses provide adequate protection for both parties.";
+            
+            // File upload handler
+            fileUpload.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    fileInfo.innerHTML = `<i class="fas fa-file mr-2"></i> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                    fileInfo.classList.remove('hidden');
+                    
+                    // Show loading state
+                    extractedContent.classList.add('hidden');
+                    setTimeout(() => {
+                        // Simulate text extraction and analysis
+                        extractedText.textContent = mockExtractedText;
+                        summary.textContent = mockSummary;
+                        
+                        // Create risk tags
+                        risks.innerHTML = mockRisks.map(risk => 
+                            `<span class="risk-tag inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">${risk}</span>`
+                        ).join('');
+                        
+                        // Create suggestions list
+                        suggestions.innerHTML = mockSuggestions.map(suggestion => 
+                            `<li class="mb-1"><i class="fas fa-lightbulb text-green-500 mr-2"></i>${suggestion}</li>`
+                        ).join('');
+                        
+                        insights.textContent = mockInsights;
+                        extractedContent.classList.remove('hidden');
+                    }, 2000);
+                }
+            });
+            
+            // Chat functionality
+            function addMessage(role, content) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+                
+                const bubble = document.createElement('div');
+                bubble.className = `max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2 ${role === 'user' ? 'bg-yellow-100 text-gray-800' : 'bg-gray-200 text-gray-800'}`;
+                bubble.innerHTML = content;
+                
+                messageDiv.appendChild(bubble);
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            // Simulate AI response
+            function getAIResponse(prompt) {
+                // Mock responses based on keywords
+                if (prompt.toLowerCase().includes('hello') || prompt.toLowerCase().includes('hi')) {
+                    return "Hello! I'm SEA-LION, your AI assistant. How can I help you today?";
+                } else if (prompt.toLowerCase().includes('contract')) {
+                    return "I can help analyze contracts. Please upload the document and I'll extract key information, risks, and provide suggestions.";
+                } else if (prompt.toLowerCase().includes('deadline')) {
+                    return "Deadlines are important in contracts. I can help identify them and suggest reminder systems to ensure compliance.";
+                } else {
+                    return "I'm an AI trained to analyze documents and provide insights. For best results, upload your document and ask specific questions about its content.";
+                }
+            }
+            
+            // Send message handler
+            function sendMessage() {
+                const message = chatInput.value.trim();
+                if (message) {
+                    addMessage('user', message);
+                    chatInput.value = '';
+                    
+                    // Show typing indicator
+                    const typingIndicator = document.createElement('div');
+                    typingIndicator.className = 'flex justify-start';
+                    typingIndicator.innerHTML = `
+                        <div class="bg-gray-200 text-gray-800 rounded-lg px-4 py-2">
+                            <span class="typing-indicator">SEA-LION is typing</span>
+                        </div>
+                    `;
+                    chatMessages.appendChild(typingIndicator);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    
+                    // Simulate AI thinking time
+                    setTimeout(() => {
+                        chatMessages.removeChild(typingIndicator);
+                        const response = getAIResponse(message);
+                        addMessage('assistant', response);
+                    }, 1500);
+                }
+            }
+            
+            // Event listeners
+            sendButton.addEventListener('click', sendMessage);
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // Add welcome message
+            setTimeout(() => {
+                addMessage('assistant', "Hello! I'm SEA-LION, your AI assistant. You can upload documents for analysis or ask me questions directly.");
+            }, 500);
+        });
+    </script>
+</body>
+</html>
