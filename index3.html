@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEA-LION Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .chat-container {
+            height: calc(100vh - 280px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #f59e0b #fef3c7;
+        }
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-container::-webkit-scrollbar-track {
+            background: #fef3c7;
+        }
+        .chat-container::-webkit-scrollbar-thumb {
+            background-color: #f59e0b;
+            border-radius: 6px;
+        }
+        @media (max-width: 768px) {
+            .chat-container {
+                height: calc(100vh - 320px);
+            }
+        }
+        .file-upload-label {
+            transition: all 0.3s ease;
+        }
+        .file-upload-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .typing-indicator::after {
+            content: "...";
+            animation: typing 1.5s infinite;
+        }
+        @keyframes typing {
+            0% { content: "."; }
+            33% { content: ".."; }
+            66% { content: "..."; }
+        }
+        .risk-tag {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+        .message-bubble {
+            position: relative;
+            overflow: hidden;
+        }
+        .message-bubble:after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1), transparent);
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tooltip {
+            position: relative;
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            width: max-content;
+            max-width: 200px;
+            transition: all 0.3s ease;
+        }
+        .tooltip-text:after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-yellow-50 to-gray-100 min-h-screen">
+<div class="container mx-auto max-w-6xl p-4">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between mb-6">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-br from-yellow-400 to-yellow-500 p-3 rounded-full shadow-md">
+                <i class="fas fa-lion text-2xl text-yellow-800"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">SEA-LION Chatbot</h1>
+                <p class="text-sm text-gray-600">Powered by Gemma v3-9B-IT</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="hidden md:block">
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">Beta</span>
+            </div>
+            <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors">
+                <i class="fas fa-moon text-gray-700"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- File Upload Section -->
+        <div class="p-6 border-b">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold text-gray-800">Upload Document</h2>
+                <div class="flex space-x-2">
+                    <button id="sample-btn" class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
+                        Load Sample
+                    </button>
+                    <button id="clear-btn" class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
+                        Clear
+                    </button>
+                </div>
+            </div>
+            <label class="file-upload-label flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                    <p class="mb-2 text-sm text-gray-500">Click to upload or drag and drop</p>
+                    <p class="text-xs text-gray-500">PDF, DOCX, TXT, PNG, JPG (Max 10MB)</p>
+                </div>
+                <input id="file-upload" type="file" class="hidden" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg">
+            </label>
+            <div id="file-info" class="hidden text-sm text-gray-600 mt-2 flex items-center">
+                <i class="fas fa-file mr-2"></i>
+                <span id="file-name" class="truncate flex-1"></span>
+                <button id="remove-file" class="ml-2 text-red-500 hover:text-red-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Extracted Content Section -->
+        <div id="extracted-content" class="hidden p-6 border-b">
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-medium text-gray-700">Extracted Text</h3>
+                    <div class="flex space-x-2">
+                        <button id="copy-text" class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors tooltip">
+                            <i class="fas fa-copy"></i>
+                            <span class="tooltip-text">Copy text</span>
+                        </button>
+                        <button id="download-text" class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors tooltip">
+                            <i class="fas fa-download"></i>
+                            <span class="tooltip-text">Download as TXT</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="extracted-text" class="bg-gray-50 p-4 rounded-lg h-48 overflow-y-auto text-sm text-gray-700 font-mono"></div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-medium text-blue-800">Summary</h3>
+                        <i class="fas fa-info-circle text-blue-400"></i>
+                    </div>
+                    <div id="summary" class="text-sm text-blue-700"></div>
+                </div>
+                <div class="bg-red-50 p-4 rounded-lg border border-red-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-medium text-red-800">Detected Risks</h3>
+                        <i class="fas fa-exclamation-triangle text-red-400"></i>
+                    </div>
+                    <div id="risks" class="text-sm text-red-700"></div>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-medium text-green-800">Smart Suggestions</h3>
+                        <i class="fas fa-lightbulb text-green-400"></i>
+                    </div>
+                    <div id="suggestions" class="text-sm text-green-700"></div>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-purple-50 p-4 rounded-lg border border-purple-100">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="font-medium text-purple-800">SEA-LION Insights</h3>
+                    <i class="fas fa-brain text-purple-400"></i>
+                </div>
+                <div id="insights" class="text-sm text-purple-700"></div>
+            </div>
+        </div>
+
+        <!-- Chat Section -->
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-800">Chat with SEA-LION</h2>
+                <div class="flex space-x-2">
+                    <button id="clear-chat" class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
+                        Clear Chat
+                    </button>
+                    <button id="suggest-questions" class="text-xs px-3 py-1 bg-yellow-100 hover:bg-yellow-200 rounded-full transition-colors">
+                        Suggest Questions
+                    </button>
+                </div>
+            </div>
+            <div id="chat-messages" class="chat-container mb-4 space-y-4"></div>
+            <div class="flex items-center space-x-2">
+                <div class="relative flex-1">
+                    <input id="chat-input" type="text" placeholder="Type your message..." 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-yellow-400 pl-12">
+                    <div class="absolute left-3 top-1/2 transform -translate-y-1/2 flex space-x-1">
+                        <button id="attach-file" class="text-gray-400 hover:text-yellow-500 transition-colors tooltip">
+                            <i class="fas fa-paperclip"></i>
+                            <span class="tooltip-text">Attach file</span>
+                        </button>
+                        <button id="voice-input" class="text-gray-400 hover:text-yellow-500 transition-colors tooltip">
+                            <i class="fas fa-microphone"></i>
+                            <span class="tooltip-text">Voice input</span>
+                        </button>
+                    </div>
+                </div>
+                <button id="send-button" class="bg-gradient-to-br from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white p-3 rounded-full w-12 h-12 flex items-center justify-center transition-all shadow-md hover:shadow-lg">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-6 text-center text-sm text-gray-500">
+        <p>SEA-LION Chatbot © 2023 | Powered by Gemma AI | <a href="#" class="text-yellow-600 hover:underline">Privacy Policy</a> | <a href="#" class="text-yellow-600 hover:underline">Terms of Service</a></p>
+    </footer>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // DOM Elements
+    const fileUpload = document.getElementById('file-upload');
+    const fileInfo = document.getElementById('file-info');
+    const fileName = document.getElementById('file-name');
+    const removeFile = document.getElementById('remove-file');
+    const extractedContent = document.getElementById('extracted-content');
+    const extractedText = document.getElementById('extracted-text');
+    const summary = document.getElementById('summary');
+    const risks = document.getElementById('risks');
+    const suggestions = document.getElementById('suggestions');
+    const insights = document.getElementById('insights');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const sendButton = document.getElementById('send-button');
+    const sampleBtn = document.getElementById('sample-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const clearChat = document.getElementById('clear-chat');
+    const suggestQuestions = document.getElementById('suggest-questions');
+    const attachFile = document.getElementById('attach-file');
+    const voiceInput = document.getElementById('voice-input');
+    const copyText = document.getElementById('copy-text');
+    const downloadText = document.getElementById('download-text');
+    const themeToggle = document.getElementById('theme-toggle');
+
+    // Static mock data
+    const mockText = `Perjanjian Kerjasama antara PT Maju Jaya dan CV Sukses Makmur\n\nPasal 1 - Ketentuan Umum\n1.1. Perjanjian ini berlaku selama 12 (dua belas) bulan terhitung sejak tanggal penandatanganan.\n1.2. Para pihak sepakat untuk bekerja sama dalam pengembangan produk digital.\n\nPasal 2 - Tanggung Jawab\n2.1. PT Maju Jaya bertanggung jawab atas pengembangan produk utama.\n2.2. CV Sukses Makmur bertanggung jawab atas pemasaran dan distribusi.\n2.3. Tenggat waktu penyelesaian pekerjaan adalah 30 (tiga puluh) hari kerja.\n\nPasal 3 - Force Majeure\n3.1. Para pihak dibebaskan dari tanggung jawab jika terjadi force majeure.\n3.2. Denda keterlambatan sebesar 0.5% dari nilai kontrak per hari.`;
+
+    const mockSummary = "Perjanjian kerjasama 12 bulan antara PT Maju Jaya dan CV Sukses Makmur. PT Maju Jaya bertanggung jawab untuk pengembangan produk, sedangkan CV Sukses Makmur menangani pemasaran dan distribusi. Tenggat waktu penyelesaian pekerjaan adalah 30 hari kerja dengan denda keterlambatan sebesar 0.5% dari nilai kontrak per hari.";
+    
+    const mockRisks = [
+        {text: "tenggat", severity: "medium"},
+        {text: "denda", severity: "high"},
+        {text: "tanggung jawab", severity: "low"},
+        {text: "force majeure", severity: "medium"}
+    ];
+    
+    const mockSuggestions = [
+        "Buat reminder untuk tenggat waktu 30 hari kerja.",
+        "Tinjau besaran denda 0.5% per hari - pertimbangkan untuk negosiasi jika terlalu tinggi.",
+        "Pastikan klausul tanggung jawab jelas untuk menghindari sengketa di kemudian hari.",
+        "Verifikasi definisi force majeure untuk memastikan mencakup semua kemungkinan skenario."
+    ];
+    
+    const mockInsights = "Perjanjian ini termasuk standar dengan pembagian tanggung jawab yang jelas. Namun, beberapa poin perlu diperhatikan:\n\n1. Besaran denda 0.5% per hari termasuk tinggi dibandingkan standar industri (biasanya 0.1-0.3%).\n2. Klausul force majeure sudah memadai tetapi bisa ditambahkan contoh konkret seperti pandemi, bencana alam, dll.\n3. Tidak ada klausul terminasi dini yang mungkin diperlukan untuk fleksibilitas.\n4. Pertimbangkan untuk menambahkan klausul kerahasiaan dan kepemilikan intelektual.";
+
+    const mockQuestions = [
+        "Apa konsekuensi jika melewati tenggat waktu?",
+        "Bagaimana prosedur jika terjadi force majeure?",
+        "Apakah ada klausul terminasi dini?",
+        "Bagaimana pembagian keuntungan diatur?"
+    ];
+
+    // Theme toggle
+    let darkMode = false;
+    themeToggle.addEventListener('click', function() {
+        darkMode = !darkMode;
+        if (darkMode) {
+            document.body.classList.add('bg-gray-900');
+            document.body.classList.remove('bg-gradient-to-br', 'from-yellow-50', 'to-gray-100');
+            themeToggle.innerHTML = '<i class="fas fa-sun text-yellow-300"></i>';
+        } else {
+            document.body.classList.remove('bg-gray-900');
+            document.body.classList.add('bg-gradient-to-br', 'from-yellow-50', 'to-gray-100');
+            themeToggle.innerHTML = '<i class="fas fa-moon text-gray-700"></i>';
+        }
+    });
+
+    // File upload handler
+    fileUpload.addEventListener('change', function(e){
+        const file = e.target.files[0];
+        if(file){
+            fileName.textContent = file.name;
+            fileInfo.innerHTML = `
+                <i class="fas fa-file mr-2"></i>
+                <span id="file-name" class="truncate flex-1">${file.name} (${(file.size/1024/1024).toFixed(2)} MB)</span>
+                <button id="remove-file" class="ml-2 text-red-500 hover:text-red-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            fileInfo.classList.remove('hidden');
+
+            // Simulate processing
+            addMessage('assistant', '<div class="typing-indicator">Processing your document...</div>');
+            
+            setTimeout(() => {
+                extractedText.textContent = mockText;
+                summary.textContent = mockSummary;
+                
+                risks.innerHTML = mockRisks.map(r => {
+                    const color = r.severity === 'high' ? 'bg-red-200 text-red-900' : 
+                                 r.severity === 'medium' ? 'bg-orange-200 text-orange-900' : 'bg-yellow-200 text-yellow-900';
+                    return `<span class="risk-tag inline-block ${color} text-xs px-2 py-1 rounded-full mr-1 mb-1">${r.text}</span>`;
+                }).join('');
+                
+                suggestions.innerHTML = mockSuggestions.map(s => 
+                    `<li class="mb-2 flex items-start">
+                        <i class="fas fa-lightbulb text-green-500 mr-2 mt-1"></i>
+                        <span>${s}</span>
+                    </li>`
+                ).join('');
+                
+                insights.innerHTML = mockInsights.split('\n\n').map(para => 
+                    `<p class="mb-2">${para}</p>`
+                ).join('');
+                
+                extractedContent.classList.remove('hidden');
+                
+                // Add analysis complete message
+                addMessage('assistant', 'Document analysis complete! I\'ve identified key points and potential risks. How can I help you with this document?');
+            }, 1500);
+        }
+    });
+
+    // Remove file handler
+    document.addEventListener('click', function(e) {
+        if (e.target && (e.target.id === 'remove-file' || e.target.parentElement.id === 'remove-file')) {
+            fileUpload.value = '';
+            fileInfo.classList.add('hidden');
+            extractedContent.classList.add('hidden');
+        }
+    });
+
+    // Sample document loader
+    sampleBtn.addEventListener('click', function() {
+        // Simulate file selection
+        fileName.textContent = "sample_contract.txt";
+        fileInfo.innerHTML = `
+            <i class="fas fa-file mr-2"></i>
+            <span id="file-name" class="truncate flex-1">sample_contract.txt (0.05 MB)</span>
+            <button id="remove-file" class="ml-2 text-red-500 hover:text-red-700">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        fileInfo.classList.remove('hidden');
+
+        // Simulate processing
+        addMessage('assistant', '<div class="typing-indicator">Loading sample document...</div>');
+        
+        setTimeout(() => {
+            extractedText.textContent = mockText;
+            summary.textContent = mockSummary;
+            
+            risks.innerHTML = mockRisks.map(r => {
+                const color = r.severity === 'high' ? 'bg-red-200 text-red-900' : 
+                             r.severity === 'medium' ? 'bg-orange-200 text-orange-900' : 'bg-yellow-200 text-yellow-900';
+                return `<span class="risk-tag inline-block ${color} text-xs px-2 py-1 rounded-full mr-1 mb-1">${r.text}</span>`;
+            }).join('');
+            
+            suggestions.innerHTML = mockSuggestions.map(s => 
+                `<li class="mb-2 flex items-start">
+                    <i class="fas fa-lightbulb text-green-500 mr-2 mt-1"></i>
+                    <span>${s}</span>
+                </li>`
+            ).join('');
+            
+            insights.innerHTML = mockInsights.split('\n\n').map(para => 
+                `<p class="mb-2">${para}</p>`
+            ).join('');
+            
+            extractedContent.classList.remove('hidden');
+            
+            // Add analysis complete message
+            addMessage('assistant', 'Sample document loaded! I\'ve identified key points and potential risks. How can I help you with this document?');
+        }, 1000);
+    });
+
+    // Clear document handler
+    clearBtn.addEventListener('click', function() {
+        fileUpload.value = '';
+        fileInfo.classList.add('hidden');
+        extractedContent.classList.add('hidden');
+    });
+
+    // Copy text handler
+    copyText.addEventListener('click', function() {
+        navigator.clipboard.writeText(extractedText.textContent).then(() => {
+            const originalHTML = copyText.innerHTML;
+            copyText.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => {
+                copyText.innerHTML = originalHTML;
+            }, 2000);
+        });
+    });
+
+    // Download text handler
+    downloadText.addEventListener('click', function() {
+        const blob = new Blob([extractedText.textContent], {type: 'text/plain'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'extracted_text.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    // Chat functionality
+    function addMessage(role, content, isHTML = true){
+        const div = document.createElement('div');
+        div.className = `flex ${role==='user'?'justify-end':'justify-start'} fade-in`;
+        
+        const bubble = document.createElement('div');
+        bubble.className = `max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-3 message-bubble ${role==='user'?'bg-yellow-100 text-gray-800':'bg-gray-200 text-gray-800'}`;
+        
+        if (isHTML) {
+            bubble.innerHTML = content;
+        } else {
+            bubble.textContent = content;
+        }
+        
+        div.appendChild(bubble);
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function sendMessage(){
+        const msg = chatInput.value.trim();
+        if(msg){
+            addMessage('user', msg, false);
+            chatInput.value = '';
+            
+            // Show typing indicator
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'flex justify-start fade-in';
+            typingDiv.innerHTML = `
+                <div class="max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-3 bg-gray-200 text-gray-800">
+                    <div class="typing-indicator">SEA-LION is typing</div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Simulate bot response after delay
+            setTimeout(() => {
+                // Remove typing indicator
+                chatMessages.removeChild(typingDiv);
+                
+                // Add response
+                const responses = [
+                    "I've analyzed the document and found that the most critical aspect is the penalty clause at 0.5% per day. This is higher than industry standard.",
+                    "Based on the contract, the force majeure clause seems comprehensive but could benefit from more specific examples like pandemics or natural disasters.",
+                    "The 30-day deadline for project completion is reasonable, but you might want to include milestones for better progress tracking.",
+                    "I notice there's no mention of intellectual property rights in this agreement. This could be an important addition to protect your assets."
+                ];
+                
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                addMessage('assistant', randomResponse);
+            }, 1500 + Math.random() * 2000);
+        }
+    }
+
+    // Send message on button click or Enter key
+    sendButton.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', e => {
+        if(e.key === 'Enter') sendMessage();
+    });
+
+    // Clear chat handler
+    clearChat.addEventListener('click', function() {
+        chatMessages.innerHTML = '';
+        // Add welcome message back
+        setTimeout(() => {
+            addMessage('assistant', "Hello! I'm SEA-LION, your AI assistant. Upload a document or chat directly with me.");
+        }, 300);
+    });
+
+    // Suggest questions handler
+    suggestQuestions.addEventListener('click', function() {
+        addMessage('assistant', "Here are some questions you might want to ask about this document:");
+        
+        const questionsList = document.createElement('div');
+        questionsList.className = 'mt-2 space-y-2';
+        
+        mockQuestions.forEach(q => {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'flex items-start';
+            questionDiv.innerHTML = `
+                <i class="fas fa-question-circle text-yellow-500 mr-2 mt-1"></i>
+                <span class="bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg cursor-pointer" onclick="document.getElementById('chat-input').value='${q}'; document.getElementById('chat-input').focus();">
+                    ${q}
+                </span>
+            `;
+            questionsList.appendChild(questionDiv);
+        });
+        
+        setTimeout(() => {
+            const lastMessage = chatMessages.lastChild;
+            lastMessage.querySelector('div').appendChild(questionsList);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 300);
+    });
+
+    // Attach file handler
+    attachFile.addEventListener('click', function() {
+        fileUpload.click();
+    });
+
+    // Voice input handler (mock)
+    voiceInput.addEventListener('click', function() {
+        addMessage('assistant', "Voice input is not implemented in this demo. Please type your message instead.");
+    });
+
+    // Welcome message
+    setTimeout(() => {
+        addMessage('assistant', "Hello! I'm SEA-LION, your AI assistant. Upload a document or chat directly with me.");
+    }, 500);
+});
+</script>
+</body>
+</html>
