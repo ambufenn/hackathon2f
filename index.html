@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEA-LION Chatbot</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    .chat-container { height: 300px; overflow-y:auto; }
+    .bubble { max-width: 70%; padding: 10px; border-radius: 12px; margin-bottom: 8px; }
+    .user { background-color: #fde68a; align-self: flex-end; }
+    .assistant { background-color: #e5e7eb; align-self: flex-start; }
+</style>
+</head>
+<body class="bg-gray-100 p-4">
+<div class="max-w-5xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">SEA-LION Chatbot (Gemma v3-9B-IT)</h1>
+
+    <!-- Upload File Card -->
+    <div class="bg-white rounded-xl shadow p-4 mb-4">
+        <h2 class="font-semibold mb-2">Upload File</h2>
+        <input type="file" id="file-upload" class="mb-2">
+        <div id="file-info" class="text-gray-600 mb-2"></div>
+        <div id="extracted-text" class="bg-gray-50 p-2 rounded h-32 overflow-y-auto text-sm mb-2"></div>
+        <div id="summary" class="text-blue-700 mb-1"></div>
+        <div id="risks" class="text-red-700 mb-1"></div>
+        <div id="suggestions" class="text-green-700 mb-1"></div>
+        <div id="insight" class="text-purple-700"></div>
+    </div>
+
+    <!-- Chat Card -->
+    <div class="bg-white rounded-xl shadow p-4">
+        <h2 class="font-semibold mb-2">Chat</h2>
+        <div id="chat-messages" class="chat-container flex flex-col mb-2"></div>
+        <div class="flex space-x-2">
+            <input type="text" id="chat-input" class="flex-1 border rounded px-2 py-1" placeholder="Ketik pesan...">
+            <button id="send-btn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const fileUpload = document.getElementById('file-upload');
+const fileInfo = document.getElementById('file-info');
+const extractedText = document.getElementById('extracted-text');
+const summaryEl = document.getElementById('summary');
+const risksEl = document.getElementById('risks');
+const suggestionsEl = document.getElementById('suggestions');
+const insightEl = document.getElementById('insight');
+
+fileUpload.addEventListener('change', async () => {
+    const file = fileUpload.files[0];
+    if (!file) return;
+    fileInfo.textContent = `Uploading: ${file.name}`;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const res = await fetch("http://localhost:8000/process_file", {
+            method: "POST",
+            body: formData
+        });
+        const data = await res.json();
+        extractedText.textContent = data.text || "";
+        summaryEl.textContent = "Ringkasan: " + (data.summary || "");
+        risksEl.textContent = "Risiko: " + (data.risks?.join(", ") || "Tidak ada");
+        suggestionsEl.textContent = "Saran: " + (data.suggestions?.join(", ") || "Tidak ada");
+        insightEl.textContent = "Insight: " + (data.insight || "");
+        fileInfo.textContent = `Uploaded: ${file.name}`;
+    } catch(err) {
+        fileInfo.textContent = "Error: " + err.message;
+    }
+});
+
+// Chat
+const chatInput = document.getElementById('chat-input');
+const sendBtn = document.getElementById('send-btn');
+const chatMessages = document.getElementById('chat-messages');
+
+sendBtn.addEventListener('click', sendMessage);
+chatInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
+
+async function sendMessage() {
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+    addMessage("user", msg);
+    chatInput.value = "";
+
+    const res = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({message: msg})
+    });
+    const data = await res.json();
+    addMessage("assistant", data.response || "Error");
+}
+
+function addMessage(role, text) {
+    const div = document.createElement("div");
+    div.className = `bubble ${role}`;
+    div.textContent = text;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+</script>
+</body>
+</html>
