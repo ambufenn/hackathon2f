@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEA-LION Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .chat-container {
+            height: calc(100vh - 180px);
+        }
+        @media (max-width: 768px) {
+            .chat-container {
+                height: calc(100vh - 220px);
+            }
+        }
+        .file-upload-label {
+            transition: all 0.3s ease;
+        }
+        .file-upload-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .typing-indicator::after {
+            content: "...";
+            animation: typing 1.5s infinite;
+        }
+        @keyframes typing {
+            0% { content: "."; }
+            33% { content: ".."; }
+            66% { content: "..."; }
+        }
+        .risk-tag {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto max-w-6xl p-4">
+        <!-- Header -->
+        <header class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-3">
+                <div class="bg-yellow-400 p-3 rounded-full">
+                    <i class="fas fa-lion text-2xl text-yellow-800"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">SEA-LION Chatbot</h1>
+                    <p class="text-sm text-gray-600">Powered by Gemma v3-9B-IT</p>
+                </div>
+            </div>
+            <div class="hidden md:block">
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">Beta</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- File Upload Section -->
+            <div class="p-6 border-b">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Upload Document</h2>
+                <div class="space-y-4">
+                    <label class="file-upload-label flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                            <p class="mb-2 text-sm text-gray-500">Click to upload or drag and drop</p>
+                            <p class="text-xs text-gray-500">PDF, DOCX, TXT, PNG, JPG (Max 10MB)</p>
+                        </div>
+                        <input id="file-upload" type="file" class="hidden" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg">
+                    </label>
+                    <div id="file-info" class="hidden text-sm text-gray-600"></div>
+                </div>
+            </div>
+
+            <!-- Extracted Content Section -->
+            <div id="extracted-content" class="hidden p-6 border-b">
+                <div class="mb-6">
+                    <h3 class="font-medium text-gray-700 mb-2">Extracted Text</h3>
+                    <div id="extracted-text" class="bg-gray-50 p-4 rounded-lg h-48 overflow-y-auto text-sm text-gray-700"></div>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-blue-800 mb-2">Summary</h3>
+                        <div id="summary" class="text-sm text-blue-700"></div>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-red-800 mb-2">Detected Risks</h3>
+                        <div id="risks" class="text-sm text-red-700"></div>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-green-800 mb-2">Smart Suggestions</h3>
+                        <div id="suggestions" class="text-sm text-green-700"></div>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-purple-50 p-4 rounded-lg">
+                    <h3 class="font-medium text-purple-800 mb-2">SEA-LION Insights</h3>
+                    <div id="insights" class="text-sm text-purple-700"></div>
+                </div>
+            </div>
+
+            <!-- Chat Section -->
+            <div class="p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Chat with SEA-LION</h2>
+                
+                <!-- Chat Messages -->
+                <div id="chat-messages" class="chat-container overflow-y-auto mb-4 space-y-4">
+                    <!-- Messages will appear here -->
+                </div>
+                
+                <!-- Chat Input -->
+                <div class="flex items-center space-x-2">
+                    <input id="chat-input" type="text" placeholder="Type your message..." class="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                    <button id="send-button" class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full w-10 h-10 flex items-center justify-center transition-colors">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-6 text-center text-sm text-gray-500">
+            <p>SEA-LION Chatbot © 2023 | Powered by Gemma AI</p>
+        </footer>
+    </div>
+
+    <script>
+        // Document processing services
+        async function extractTextFromFile(file) {
+            /* Ekstrak teks dari file PDF/DOCX/TXT/IMG dengan optimasi */
+            const fileType = file.type;
+
+            if (fileType.startsWith('image/')) {
+                // For images we'll use Tesseract.js (similar to easyOCR)
+                const { createWorker } = Tesseract;
+                const worker = await createWorker();
+                let result;
+                try {
+                    await worker.loadLanguage('eng');
+                    await worker.initialize('eng');
+                    result = await worker.recognize(file);
+                } finally {
+                    await worker.terminate();
+                }
+                return result.data.text;
+            } else if (fileType === 'application/pdf') {
+                // For PDFs we'll use pdf.js (similar to PyPDF2)
+                const loadingTask = pdfjsLib.getDocument(URL.createObjectURL(file));
+                const pdf = await loadingTask.promise;
+                let text = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    text += content.items.map(item => item.str).join(' ');
+                }
+                return text;
+            } else if (fileType.includes('wordprocessingml.document')) {
+                // For DOCX we'll use mammoth.js (similar to python-docx)
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await mammoth.extractRawText({arrayBuffer});
+                return result.value;
+            } else if (fileType === 'text/plain') {
+                return await file.text();
+            }
+            // Fallback similar to textract
+            return "Unsupported file type - please try PDF, DOCX, TXT or image files";
+        }
+
+        async function summarizeTextAI(text) {
+            /* Ringkas teks dengan AI */
+            const prompt = `Berikan ringkasan yang jelas dan singkat dari teks dokumen berikut: ${text.substring(0, 2000)}
+            Ringkasan sebaiknya fokus pada isi penting dan mengabaikan header/footer.`;
+            return await getAIResponse(prompt);
+        }
+
+        function detectRisk(text) {
+            /* Deteksi kata kunci risiko */
+            const riskKeywords = ["penalty", "liability", "deadline", "fine", 
+                                "risiko", "denda", "tenggat", "sanksi"];
+            return riskKeywords.filter(kw => text.toLowerCase().includes(kw.toLowerCase()));
+        }
+
+        function smartSuggestions(text) {
+            /* Beri saran cerdas */
+            const suggestions = [];
+            const lowerText = text.toLowerCase();
+            
+            if (lowerText.includes('deadline') || lowerText.includes('tenggat')) {
+                suggestions.push("Periksa tanggal tenggat dan buat reminder.");
+            }
+            if (lowerText.includes('liability') || lowerText.includes('tanggung jawab')) {
+                suggestions.push("Pastikan ada klausul proteksi risiko.");
+            }
+            if (lowerText.includes('penalty') || lowerText.includes('denda')) {
+                suggestions.push("Tinjau besaran denda dan negosiasikan jika perlu.");
+            }
+            return suggestions;
+        }
+
+        async function generateInsight(text, summary, risks, suggestions) {
+            /* Hasilkan insight tambahan dari AI */
+            const prompt = `Berikut teks dokumen: ${text.substring(0, 1000)}
+            Ringkasan: ${summary}
+            Risiko terdeteksi: ${risks.length ? risks.join(', ') : 'Tidak ada'}
+            Saran: ${suggestions.length ? suggestions.join(', ') : 'Tidak ada'}
+            
+            Berikan insight tambahan atau smart suggestion berdasarkan ini.
+            Fokus pada poin-poin penting dan berikan rekomendasi praktis.`;
+            return await getAIResponse(prompt);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // File upload handling
+            const fileUpload = document.getElementById('file-upload');
+            const fileInfo = document.getElementById('file-info');
+            const extractedContent = document.getElementById('extracted-content');
+            const extractedText = document.getElementById('extracted-text');
+            const summary = document.getElementById('summary');
+            const risks = document.getElementById('risks');
+            const suggestions = document.getElementById('suggestions');
+            const insights = document.getElementById('insights');
+            
+            // Chat elements
+            const chatMessages = document.getElementById('chat-messages');
+            const chatInput = document.getElementById('chat-input');
+            const sendButton = document.getElementById('send-button');
+            
+            // Mock data for demonstration
+            const mockExtractedText = `Perjanjian Kerjasama antara PT Maju Jaya dan CV Sukses Makmur
+Pasal 1 - Ketentuan Umum
+1.1. Perjanjian ini berlaku selama 12 bulan sejak ditandatangani.
+1.2. Penyedia jasa wajib menyelesaikan pekerjaan dalam tenggat waktu 30 hari kerja.
+1.3. Keterlambatan pengiriman akan dikenakan denda sebesar 0.5% dari nilai kontrak per hari.
+
+Pasal 2 - Tanggung Jawab
+2.1. Pihak pertama bertanggung jawab atas kualitas bahan baku.
+2.2. Pihak kedua bertanggung jawab atas proses produksi.
+2.3. Setiap pelanggaran akan dikenakan sanksi sesuai peraturan yang berlaku.
+
+Pasal 3 - Force Majeure
+3.1. Kedua belah pihak dibebaskan dari tanggung jawab jika terjadi force majeure.`;
+
+            const mockSummary = "Perjanjian 12 bulan antara PT Maju Jaya dan CV Sukses Makmur dengan tenggat 30 hari kerja dan denda 0.5% per hari keterlambatan, termasuk klausul tanggung jawab dan force majeure.";
+            const mockRisks = ["tenggat", "denda", "tanggung jawab", "sanksi"];
+            const mockSuggestions = [
+                "Periksa tanggal tenggat dan buat reminder.", 
+                "Tinjau besaran denda dan negosiasikan jika perlu.",
+                "Pastikan klausul tanggung jawab jelas dan adil."
+            ];
+            const mockInsights = "Perjanjian ini memiliki ketentuan standar namun besaran denda perlu diperhatikan. Klausul force majeure sudah mencukupi. Disarankan untuk menambahkan mekanisme penyelesaian perselisihan jika diperlukan.";
+            
+            // File upload handler
+            fileUpload.addEventListener('change', async function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    fileInfo.innerHTML = `<i class="fas fa-file mr-2"></i> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                    fileInfo.classList.remove('hidden');
+                    
+                    // Show loading state
+                    extractedContent.classList.add('hidden');
+                    
+                    try {
+                        // Process the file
+                        const text = await extractTextFromFile(file);
+                        const extractedSummary = await summarizeTextAI(text);
+                        const detectedRisks = detectRisk(text);
+                        const smartSuggestionsList = smartSuggestions(text);
+                        const generatedInsights = await generateInsight(text, extractedSummary, detectedRisks, smartSuggestionsList);
+                        
+                        // Update UI with results
+                        extractedText.textContent = text;
+                        summary.textContent = extractedSummary;
+                        
+                        // Create risk tags
+                        risks.innerHTML = detectedRisks.map(risk => 
+                            `<span class="risk-tag inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">${risk}</span>`
+                        ).join('');
+                        
+                        // Create suggestions list
+                        suggestions.innerHTML = smartSuggestionsList.map(suggestion => 
+                            `<li class="mb-1"><i class="fas fa-lightbulb text-green-500 mr-2"></i>${suggestion}</li>`
+                        ).join('');
+                        
+                        insights.textContent = generatedInsights;
+                        extractedContent.classList.remove('hidden');
+                        
+                    } catch (error) {
+                        console.error("Error processing file:", error);
+                        fileInfo.innerHTML += `<div class="text-red-500 mt-2">Error processing file: ${error.message}</div>`;
+                    }
+                }
+            });
+            
+            // Chat functionality
+            function addMessage(role, content) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+                
+                const bubble = document.createElement('div');
+                bubble.className = `max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2 ${role === 'user' ? 'bg-yellow-100 text-gray-800' : 'bg-gray-200 text-gray-800'}`;
+                bubble.innerHTML = content;
+                
+                messageDiv.appendChild(bubble);
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            // Simulate AI response
+            async function getAIResponse(prompt) {
+                try {
+                    // In a real implementation, this would call an actual AI API
+                    // For now we'll return a generic response
+                    return "This is a simulated AI response. In a real implementation, this would connect to an AI service like OpenAI or a local LLM to generate responses based on the document content and user query.";
+                } catch (error) {
+                    console.error("Error getting AI response:", error);
+                    return "Sorry, I encountered an error processing your request. Please try again.";
+                }
+            }
+            
+            // Send message handler
+            function sendMessage() {
+                const message = chatInput.value.trim();
+                if (message) {
+                    addMessage('user', message);
+                    chatInput.value = '';
+                    
+                    // Show typing indicator
+                    const typingIndicator = document.createElement('div');
+                    typingIndicator.className = 'flex justify-start';
+                    typingIndicator.innerHTML = `
+                        <div class="bg-gray-200 text-gray-800 rounded-lg px-4 py-2">
+                            <span class="typing-indicator">SEA-LION is typing</span>
+                        </div>
+                    `;
+                    chatMessages.appendChild(typingIndicator);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    
+                    // Simulate AI thinking time
+                    setTimeout(() => {
+                        chatMessages.removeChild(typingIndicator);
+                        const response = getAIResponse(message);
+                        addMessage('assistant', response);
+                    }, 1500);
+                }
+            }
+            
+            // Event listeners
+            sendButton.addEventListener('click', sendMessage);
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // Add welcome message
+            setTimeout(() => {
+                addMessage('assistant', "Hello! I'm SEA-LION, your AI assistant. You can upload documents for analysis or ask me questions directly.");
+            }, 500);
+        });
+    </script>
+    
+    <!-- Add required libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.4.0/mammoth.browser.min.js"></script>
+</body>
+</html
