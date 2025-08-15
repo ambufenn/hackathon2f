@@ -1,20 +1,20 @@
 # Web & Frontend
-streamlit==1.28.0
-requests==2.31.0
+streamlit
+requests
 
 # Backend / FastAPI
-fastapi==0.111.0
-uvicorn[standard]==0.23.2
+fastapi
+uvicorn
 
 # AI / LLM
-openai==1.29.0  # atau sesuai versi OpenAI / Sea-Lion SDK
-Pillow==10.0.0
+openai  # atau sesuai versi OpenAI / Sea-Lion SDK
+Pillow
 
 # OCR & dokumen
-easyocr==1.6.2
-PyPDF2==3.1.0
-python-docx==0.8.12
-textract==1.0.3
+easyocr
+PyPDF2
+python-docx
+textract
 
 # Optional (env & caching)
-python-dotenv==1.0.0
+python-dotenv
