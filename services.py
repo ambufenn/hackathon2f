@@ -23,7 +23,7 @@ def extract_text_from_file(uploaded_file) -> str:
         result = reader.readtext(image, detail=0)
         return "\n".join(result)
 
-    elif file_type == "application/pdf":
+    elif file_type == "pdf":
         from PyPDF2 import PdfReader
         reader = PdfReader(uploaded_file)
         text = "\n".join([page.extract_text() or "" for page in reader.pages])
