@@ -6,5 +6,5 @@ textract
 easyocr
 torch
 pandas
-six
+six==1.16.0
 numpy
