@@ -59,18 +59,20 @@ st.markdown("""
 st.set_page_config(page_title="SERENADE DATA Chatbot", page_icon="🦁", layout="wide")
 
 # ====== APP TITLE ======
-st.title("🦁 SEA-LION Chatbot (Gemma v3-9B-IT)")
+# --- Title Section ---
 st.markdown(
     """
-    <p style='color:#6c757d; font-size:0.95rem;'>
-    Tools ini membantu Kamu membaca dokumen lebih cepat dengan cara: 
-    mengekstrak isi dokumen, meringkas poin penting, mendeteksi risiko, 
-    memberikan saran cerdas, serta menghasilkan <b>Insight Dokumen Kamu</b>. 
-    Setelah dokumen diproses, Kamu juga bisa berdiskusi lewat chat untuk menggali lebih dalam.
-    </p>
-    """, 
+    <div style="text-align: center; padding: 10px 0;">
+        <h1 style="margin-bottom: 0;">🦁 SEA-LION Chatbot (Gemma v3-9B-IT)</h1>
+        <p style="color: #d1d1d1; font-size: 16px; margin-top: 5px;">
+            Tools ini membantu Kamu membaca dokumen lebih cepat dengan cara: mengekstrak isi dokumen, 
+            meringkas poin penting, mendeteksi risiko, memberi saran cerdas, serta menghasilkan <b>Insight Dokumen</b>.
+        </p>
+    </div>
+    """,
     unsafe_allow_html=True
 )
+st.markdown("---")
 st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
 st.markdown("<h2 class='upload-title'>📂 Upload Dokumen Anda</h2>", unsafe_allow_html=True)
 uploaded_file = st.file_uploader("Pilih file PDF/DOCX/TXT/IMG", type=["pdf","docx","txt","png","jpg","jpeg"])
