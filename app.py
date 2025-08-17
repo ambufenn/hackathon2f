@@ -133,7 +133,8 @@ if uploaded_file is not None:
                 st.markdown(prompt)
             with st.chat_message("assistant"):
                 with st.spinner("Generating response..."):
-                    response = generate_response(prompt)
+                    response = generate_response(prompt, context=extracted_text)
+                    # response = generate_response(prompt)
                 st.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
     except Exception as e:
