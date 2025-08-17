@@ -73,28 +73,6 @@ def extract_text_from_file(uploaded_file) -> str:
         raw = textract.process(tmp_file_path)
         return safe_decode(raw)
 
-        # Batas adjustment
-    #     reader = PdfReader(uploaded_file)
-    #     text = "\n".join([page.extract_text() or "" for page in reader.pages])
-    #     return text
-
-    # elif file_type in ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
-    #     import docx
-    #     doc = docx.Document(uploaded_file)
-    #     return "\n".join([para.text for para in doc.paragraphs])
-
-    # elif file_type == "text/plain":
-    #     return uploaded_file.read().decode("utf-8", errors="ignore")
-
-    # # Fallback ke textract kalau format tidak dikenal
-    # else:
-    #     with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-    #         tmp_file.write(uploaded_file.read())
-    #         tmp_file_path = tmp_file.name
-    #     import textract
-    #     return textract.process(tmp_file_path).decode("utf-8", errors="ignore")
-
-
 def summarize_text_ai(text: str) -> str:
     """Ringkas teks dengan AI"""
     prompt = f"""
