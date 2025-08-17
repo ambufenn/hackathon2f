@@ -69,9 +69,19 @@ st.markdown(
     unsafe_allow_html=True
 )
 st.markdown("---")
+
+col1, col2 = st.columns([1, 2])
+with col1:
+    st.markdown("<h2 class='upload-title'>📂 Upload a document</h2>", unsafe_allow_html=True)
+    st.write("Choose a file (PDF/DOCX/TXT/IMG)")
+with col2:
+    uploaded_file = st.file_uploader(
+        " ",  # kasih label kosong biar ga double
+        type=["pdf", "docx", "txt", "png", "jpg", "jpeg"]
+    )
 # st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
-st.markdown("<h2 class='upload-title'>📂 Upload a document</h2>", unsafe_allow_html=True)
-uploaded_file = st.file_uploader("File Format: PDF/DOCX/TXT/IMG", type=["pdf","docx","txt","png","jpg","jpeg"])
+# st.markdown("<h2 class='upload-title'>📂 Upload a document</h2>", unsafe_allow_html=True)
+# uploaded_file = st.file_uploader("File Format: PDF/DOCX/TXT/IMG", type=["pdf","docx","txt","png","jpg","jpeg"])
 st.markdown("</div>", unsafe_allow_html=True)
 
 
