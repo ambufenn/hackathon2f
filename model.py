@@ -14,10 +14,6 @@ client = OpenAI(
 MODEL_NAME = "aisingapore/Gemma-SEA-LION-v3-9B-IT"
 
 def generate_response(prompt: str, context: str = "") -> str:
-   """
-    Generate response with optional document context.
-    If context exists, it will prepend the chat with the document knowledge.
-    """
     if SEA_LION_API_KEY == "dummy":
         return "⚠️ API key belum di-set di st.secrets."
     try:
