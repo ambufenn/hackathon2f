@@ -85,19 +85,21 @@ with col2:
 st.markdown("</div>", unsafe_allow_html=True)
 
 
-# ====== SESSION STATE ======
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# # ====== SESSION STATE ======
+# if "messages" not in st.session_state:
+#     st.session_state.messages = []
 
-# ====== SHOW CHAT HISTORY ======
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+# # ====== SHOW CHAT HISTORY ======
+# for msg in st.session_state.messages:
+#     with st.chat_message(msg["role"]):
+#         st.markdown(msg["content"])
 
 extracted_text = ""
 if uploaded_file is not None:
     try:
         st.success(f"✅ File uploaded: {uploaded_file.name}")
+        st.markdown("---")
+        st.markdown("Reporting Result:")
         with st.spinner("Extraction text..."):
             extracted_text = extract_text_from_file(uploaded_file)
         st.text_area("Extracted Text:", extracted_text, height=200)
