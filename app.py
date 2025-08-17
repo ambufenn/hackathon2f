@@ -2,7 +2,6 @@ import streamlit as st
 from services import extract_text_from_file, summarize_text_ai, detect_risk, smart_suggestions, generate_insight
 from model import generate_response
 
-# ========== Custom CSS ========== #
 st.markdown("""
     <style>
     body {
@@ -52,11 +51,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ====== PAGE CONFIG ======
 st.set_page_config(page_title="SERENADE DATA Chatbot", page_icon="🦁", layout="wide")
-
-# ====== APP TITLE ======
-# --- Title Section ---
 st.markdown(
     """
     <div style="text-align: center; padding: 10px 0;">
@@ -79,20 +74,7 @@ with col2:
         " ",  # kasih label kosong biar ga double
         type=["pdf", "docx", "txt", "png", "jpg", "jpeg"]
     )
-# st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
-# st.markdown("<h2 class='upload-title'>📂 Upload a document</h2>", unsafe_allow_html=True)
-# uploaded_file = st.file_uploader("File Format: PDF/DOCX/TXT/IMG", type=["pdf","docx","txt","png","jpg","jpeg"])
 st.markdown("</div>", unsafe_allow_html=True)
-
-
-# # ====== SESSION STATE ======
-# if "messages" not in st.session_state:
-#     st.session_state.messages = []
-
-# # ====== SHOW CHAT HISTORY ======
-# for msg in st.session_state.messages:
-#     with st.chat_message(msg["role"]):
-#         st.markdown(msg["content"])
 
 extracted_text = ""
 if uploaded_file is not None:
@@ -116,16 +98,13 @@ if uploaded_file is not None:
         insight = generate_insight(extracted_text, summary, risks, suggestions)
         st.subheader("Insight SEA-LION")
         st.write(insight)
-        # ====== SESSION STATE ======
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
-        # Show history
         for msg in st.session_state.messages:
             role, text = msg
             css_class = "user" if role == "user" else "bot"
             st.markdown(f"<div class='chat-message {css_class}'>{text}</div>", unsafe_allow_html=True)
-        # ====== CHAT INPUT ======
         prompt = st.chat_input("Ask here...")
         if prompt:
             st.session_state.messages.append({"role": "user", "content": prompt})
