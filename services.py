@@ -23,9 +23,8 @@ def extract_text_from_file(uploaded_file) -> str:
         result = reader.readtext(image, detail=0)
         return "\n".join(result)
 
-    elif file_type == "pdf":
+    elif "pdf" in file_type:
         from PyPDF2 import PdfReader
-        # Penyesuaian dibawah
         uploaded_file.seek(0)
         try:
             reader = PdfReader(uploaded_file)
@@ -43,13 +42,14 @@ def extract_text_from_file(uploaded_file) -> str:
                     result.extend(reader.readtext(img, detail=0))
                 return "\n".join(result)
         except Exception:
-            # kalau gagal total, pakai textract
+            # fallback terakhir pakai textract
             uploaded_file.seek(0)
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
                 tmp_file.write(uploaded_file.read())
                 tmp_file_path = tmp_file.name
             import textract
-            return textract.process(tmp_file_path).decode("utf-8", errors="ignore")
+            raw = textract.process(tmp_file_path)
+            return safe_decode(raw)
 
     # ==== DOCX ====
     elif "wordprocessingml" in file_type:
@@ -61,11 +61,7 @@ def extract_text_from_file(uploaded_file) -> str:
     # ==== TXT ====
     elif "text" in file_type:
         uploaded_file.seek(0)
-        try:
-            return uploaded_file.read().decode("utf-8")
-        except UnicodeDecodeError:
-            uploaded_file.seek(0)
-            return uploaded_file.read().decode("latin-1", errors="ignore")
+        return safe_decode(uploaded_file.read())
 
     # ==== FALLBACK TEXTRACT ====
     else:
@@ -74,7 +70,8 @@ def extract_text_from_file(uploaded_file) -> str:
             tmp_file.write(uploaded_file.read())
             tmp_file_path = tmp_file.name
         import textract
-        return textract.process(tmp_file_path).decode("utf-8", errors="ignore")
+        raw = textract.process(tmp_file_path)
+        return safe_decode(raw)
 
         # Batas adjustment
     #     reader = PdfReader(uploaded_file)
