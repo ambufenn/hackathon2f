@@ -63,7 +63,7 @@ st.title("🦁 SEA-LION Chatbot (Gemma v3-9B-IT)")
 st.markdown(
     """
     <p style='color:#6c757d; font-size:0.95rem;'>
-    🚀 Tools ini membantu Kamu membaca dokumen lebih cepat dengan cara: 
+    Tools ini membantu Kamu membaca dokumen lebih cepat dengan cara: 
     mengekstrak isi dokumen, meringkas poin penting, mendeteksi risiko, 
     memberikan saran cerdas, serta menghasilkan <b>Insight Dokumen Kamu</b>. 
     Setelah dokumen diproses, Kamu juga bisa berdiskusi lewat chat untuk menggali lebih dalam.
