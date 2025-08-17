@@ -76,9 +76,9 @@ def extract_text_from_file(uploaded_file) -> str:
 def summarize_text_ai(text: str) -> str:
     """Ringkas teks dengan AI"""
     prompt = f"""
-Berikan ringkasan yang jelas dan singkat dari teks dokumen berikut:
+Provide a clear and concise summary of the following document text:
 {text[:2000]}
-Ringkasan sebaiknya fokus pada isi penting dan mengabaikan header/footer.
+The summary should focus on the key content and ignore any headers or footers.
 """
     return generate_response(prompt)
 
@@ -102,11 +102,10 @@ def smart_suggestions(text: str) -> list:
 def generate_insight(text: str, summary: str, risks: list, suggestions: list) -> str:
     """Hasilkan insight tambahan dari AI"""
     prompt_to_model = f"""
-Berikut teks dokumen: {text[:1000]}
-Ringkasan: {summary}
-Risiko terdeteksi: {', '.join(risks) if risks else 'Tidak ada'}
-Saran: {', '.join(suggestions) if suggestions else 'Tidak ada'}
-
-Berikan insight tambahan atau smart suggestion berdasarkan ini.
+Here is the document text: {text[:1000]}
+Summary: {summary}
+Detected risks: {', '.join(risks) if risks else 'None'}
+Suggestions: {', '.join(suggestions) if suggestions else 'None'}
+Provide additional insights or smart suggestions based on this.
 """
     return generate_response(prompt_to_model)
