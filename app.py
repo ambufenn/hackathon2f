@@ -60,6 +60,17 @@ st.set_page_config(page_title="SERENADE DATA Chatbot", page_icon="🦁", layout=
 
 # ====== APP TITLE ======
 st.title("🦁 SEA-LION Chatbot (Gemma v3-9B-IT)")
+st.markdown(
+    """
+    <p style='color:#6c757d; font-size:0.95rem;'>
+    🚀 Tools ini membantu Anda membaca dokumen lebih cepat dengan cara: 
+    mengekstrak isi dokumen, meringkas poin penting, mendeteksi risiko, 
+    memberikan saran cerdas, serta menghasilkan <b>Insight SEA-LION</b>. 
+    Setelah dokumen diproses, Anda juga bisa berdiskusi lewat chat untuk menggali lebih dalam.
+    </p>
+    """, 
+    unsafe_allow_html=True
+)
 st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
 st.markdown("<h2 class='upload-title'>📂 Upload Dokumen Anda</h2>", unsafe_allow_html=True)
 uploaded_file = st.file_uploader("Pilih file PDF/DOCX/TXT/IMG", type=["pdf","docx","txt","png","jpg","jpeg"])
