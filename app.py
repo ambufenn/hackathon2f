@@ -30,11 +30,27 @@ st.markdown("""
       margin-bottom: 16px;
       color: #2c3e50;
     }
-    .uploadedFile {
-      border: 2px dashed #4a90e2 !important;
-      border-radius: 12px !important;
-      padding: 10px !important;
-      background: #f9fbff !important;
+    .chat-box {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .chat-message {
+      padding: 10px 16px;
+      margin: 6px 0;
+      border-radius: 12px;
+    }
+    .user {
+      background: #4a90e2;
+      color: white;
+      text-align: right;
+    }
+    .bot {
+      background: #f1f3f6;
+      color: #2c3e50;
+      text-align: left;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -44,6 +60,11 @@ st.set_page_config(page_title="SERENADE DATA Chatbot", page_icon="🦁", layout=
 
 # ====== APP TITLE ======
 st.title("🦁 SEA-LION Chatbot (Gemma v3-9B-IT)")
+st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
+st.markdown("<h2 class='upload-title'>📂 Upload Dokumen Anda</h2>", unsafe_allow_html=True)
+uploaded_file = st.file_uploader("Pilih file PDF/DOCX/TXT/IMG", type=["pdf","docx","txt","png","jpg","jpeg"])
+st.markdown("</div>", unsafe_allow_html=True)
+
 
 # ====== SESSION STATE ======
 if "messages" not in st.session_state:
@@ -54,13 +75,10 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# ====== UPLOAD DOCUMENT ======
-st.markdown("### 📂 Upload Your Document")
-uploaded_file = st.file_uploader("Choose file...", type=["pdf", "docx", "txt", "png", "jpg", "jpeg"])
-
 extracted_text = ""
-if uploaded_file:
+if uploaded_file is not None:
     try:
+        st.success(f"✅ File berhasil diupload: {uploaded_file.name}")
         with st.spinner("Extraction text..."):
             extracted_text = extract_text_from_file(uploaded_file)
         st.text_area("Extracted Text:", extracted_text, height=200)
@@ -77,18 +95,27 @@ if uploaded_file:
         insight = generate_insight(extracted_text, summary, risks, suggestions)
         st.subheader("Insight SEA-LION")
         st.write(insight)
+        # ====== SESSION STATE ======
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
 
+        # Show history
+        for msg in st.session_state.messages:
+            role, text = msg
+            css_class = "user" if role == "user" else "bot"
+            st.markdown(f"<div class='chat-message {css_class}'>{text}</div>", unsafe_allow_html=True)
+        # ====== CHAT INPUT ======
+        prompt = st.chat_input("Ask here...")
+        if prompt:
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            with st.chat_message("assistant"):
+                with st.spinner("Menulis..."):
+                    response = generate_response(prompt)
+                st.markdown(response)
+            st.session_state.messages.append({"role": "assistant", "content": response})
     except Exception as e:
         st.error(f"Error: {e}")
 
-# ====== CHAT INPUT ======
-prompt = st.chat_input("Ask here...")
-if prompt:
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    with st.chat_message("assistant"):
-        with st.spinner("Menulis..."):
-            response = generate_response(prompt)
-        st.markdown(response)
-    st.session_state.messages.append({"role": "assistant", "content": response})
+
