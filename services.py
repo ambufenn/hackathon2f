@@ -25,25 +25,77 @@ def extract_text_from_file(uploaded_file) -> str:
 
     elif file_type == "pdf":
         from PyPDF2 import PdfReader
-        reader = PdfReader(uploaded_file)
-        text = "\n".join([page.extract_text() or "" for page in reader.pages])
-        return text
+        # Penyesuaian dibawah
+        uploaded_file.seek(0)
+        try:
+            reader = PdfReader(uploaded_file)
+            text = "\n".join([page.extract_text() or "" for page in reader.pages])
+            if text.strip():
+                return text
+            else:
+                # fallback OCR kalau PDF berbasis gambar
+                uploaded_file.seek(0)
+                from pdf2image import convert_from_bytes
+                images = convert_from_bytes(uploaded_file.read())
+                reader = get_ocr_reader()
+                result = []
+                for img in images:
+                    result.extend(reader.readtext(img, detail=0))
+                return "\n".join(result)
+        except Exception:
+            # kalau gagal total, pakai textract
+            uploaded_file.seek(0)
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+                tmp_file.write(uploaded_file.read())
+                tmp_file_path = tmp_file.name
+            import textract
+            return textract.process(tmp_file_path).decode("utf-8", errors="ignore")
 
-    elif file_type in ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
+    # ==== DOCX ====
+    elif "wordprocessingml" in file_type:
         import docx
+        uploaded_file.seek(0)
         doc = docx.Document(uploaded_file)
         return "\n".join([para.text for para in doc.paragraphs])
 
-    elif file_type == "text/plain":
-        return uploaded_file.read().decode("utf-8", errors="ignore")
+    # ==== TXT ====
+    elif "text" in file_type:
+        uploaded_file.seek(0)
+        try:
+            return uploaded_file.read().decode("utf-8")
+        except UnicodeDecodeError:
+            uploaded_file.seek(0)
+            return uploaded_file.read().decode("latin-1", errors="ignore")
 
-    # Fallback ke textract kalau format tidak dikenal
+    # ==== FALLBACK TEXTRACT ====
     else:
+        uploaded_file.seek(0)
         with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
             tmp_file.write(uploaded_file.read())
             tmp_file_path = tmp_file.name
         import textract
         return textract.process(tmp_file_path).decode("utf-8", errors="ignore")
+
+        # Batas adjustment
+    #     reader = PdfReader(uploaded_file)
+    #     text = "\n".join([page.extract_text() or "" for page in reader.pages])
+    #     return text
+
+    # elif file_type in ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
+    #     import docx
+    #     doc = docx.Document(uploaded_file)
+    #     return "\n".join([para.text for para in doc.paragraphs])
+
+    # elif file_type == "text/plain":
+    #     return uploaded_file.read().decode("utf-8", errors="ignore")
+
+    # # Fallback ke textract kalau format tidak dikenal
+    # else:
+    #     with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+    #         tmp_file.write(uploaded_file.read())
+    #         tmp_file_path = tmp_file.name
+    #     import textract
+    #     return textract.process(tmp_file_path).decode("utf-8", errors="ignore")
 
 
 def summarize_text_ai(text: str) -> str:
