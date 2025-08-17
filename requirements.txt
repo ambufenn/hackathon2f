@@ -8,3 +8,4 @@ torch
 pandas
 six==1.16.0
 numpy
+PyPDF2
