@@ -13,16 +13,43 @@ client = OpenAI(
 
 MODEL_NAME = "aisingapore/Gemma-SEA-LION-v3-9B-IT"
 
-def generate_response(prompt: str) -> str:
+def generate_response(prompt: str, context: str = "") -> str:
+   """
+    Generate response with optional document context.
+    If context exists, it will prepend the chat with the document knowledge.
+    """
     if SEA_LION_API_KEY == "dummy":
         return "⚠️ API key belum di-set di st.secrets."
     try:
+        system_message = (
+            "You are a helpful assistant. "
+            "If a document is provided, use it to answer the user question. "
+            "Document context:\n" + context if context else "You are a helpful assistant."
+        )
+
         completion = client.chat.completions.create(
             model=MODEL_NAME,
-            messages=[{"role": "user", "content": prompt}],
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": prompt}
+            ],
             temperature=0.7,
-            max_tokens=300
+            max_tokens=500
         )
         return completion.choices[0].message.content
     except Exception as e:
         return f"⚠️ API Error: {e}"
+
+# def generate_response(prompt: str) -> str:
+#     if SEA_LION_API_KEY == "dummy":
+#         return "⚠️ API key belum di-set di st.secrets."
+#     try:
+#         completion = client.chat.completions.create(
+#             model=MODEL_NAME,
+#             messages=[{"role": "user", "content": prompt}],
+#             temperature=0.7,
+#             max_tokens=300
+#         )
+#         return completion.choices[0].message.content
+#     except Exception as e:
+#         return f"⚠️ API Error: {e}"
