@@ -93,9 +93,9 @@ def smart_suggestions(text: str) -> list:
     """Beri saran cerdas"""
     suggestions = []
     if "deadline" in text.lower():
-        suggestions.append("Periksa tanggal tenggat dan buat reminder.")
+        suggestions.append("Check the deadline date and create a reminder.")
     if "liability" in text.lower():
-        suggestions.append("Pastikan ada klausul proteksi risiko.")
+        suggestions.append("Ensure there is a risk protection clause.")
     return suggestions
 
 
