@@ -35,17 +35,3 @@ def generate_response(prompt: str, context: str = "") -> str:
         return completion.choices[0].message.content
     except Exception as e:
         return f"⚠️ API Error: {e}"
-
-# def generate_response(prompt: str) -> str:
-#     if SEA_LION_API_KEY == "dummy":
-#         return "⚠️ API key belum di-set di st.secrets."
-#     try:
-#         completion = client.chat.completions.create(
-#             model=MODEL_NAME,
-#             messages=[{"role": "user", "content": prompt}],
-#             temperature=0.7,
-#             max_tokens=300
-#         )
-#         return completion.choices[0].message.content
-#     except Exception as e:
-#         return f"⚠️ API Error: {e}"
