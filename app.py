@@ -21,9 +21,6 @@ st.markdown("""
       text-align: center;
       transition: 0.3s ease;
     }
-    .upload-section:hover {
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-    }
     .upload-title {
       font-size: 1.4rem;
       font-weight: 600;
@@ -73,7 +70,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 st.markdown("---")
-st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
+# st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
 st.markdown("<h2 class='upload-title'>📂 Upload Dokumen Anda</h2>", unsafe_allow_html=True)
 uploaded_file = st.file_uploader("Pilih file PDF/DOCX/TXT/IMG", type=["pdf","docx","txt","png","jpg","jpeg"])
 st.markdown("</div>", unsafe_allow_html=True)
