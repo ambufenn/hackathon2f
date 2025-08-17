@@ -60,10 +60,9 @@ st.set_page_config(page_title="SERENADE DATA Chatbot", page_icon="🦁", layout=
 st.markdown(
     """
     <div style="text-align: center; padding: 10px 0;">
-        <h1 style="margin-bottom: 0;">🦁 SEA-LION Chatbot (Gemma v3-9B-IT)</h1>
+        <h1 style="margin-bottom: 0;">🦁 SEA-LION Insight Tool (Gemma v3-9B-IT)</h1>
         <p style="color: #d1d1d1; font-size: 16px; margin-top: 5px;">
-            Tools ini membantu Kamu membaca dokumen lebih cepat dengan cara: mengekstrak isi dokumen, 
-            meringkas poin penting, mendeteksi risiko, memberi saran cerdas, serta menghasilkan <b>Insight Dokumen</b>.
+            Upload your document to extract content, generate summary, detect risks, and receive smart insights.
         </p>
     </div>
     """,
@@ -71,8 +70,8 @@ st.markdown(
 )
 st.markdown("---")
 # st.markdown("<div class='upload-section'>", unsafe_allow_html=True)
-st.markdown("<h2 class='upload-title'>📂 Upload Dokumen Anda</h2>", unsafe_allow_html=True)
-uploaded_file = st.file_uploader("Pilih file PDF/DOCX/TXT/IMG", type=["pdf","docx","txt","png","jpg","jpeg"])
+st.markdown("<h2 class='upload-title'>📂 Upload a document</h2>", unsafe_allow_html=True)
+uploaded_file = st.file_uploader("File Format: PDF/DOCX/TXT/IMG", type=["pdf","docx","txt","png","jpg","jpeg"])
 st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -88,19 +87,19 @@ for msg in st.session_state.messages:
 extracted_text = ""
 if uploaded_file is not None:
     try:
-        st.success(f"✅ File berhasil diupload: {uploaded_file.name}")
+        st.success(f"✅ File uploaded: {uploaded_file.name}")
         with st.spinner("Extraction text..."):
             extracted_text = extract_text_from_file(uploaded_file)
         st.text_area("Extracted Text:", extracted_text, height=200)
 
         summary = summarize_text_ai(extracted_text)
-        st.write("Ringkasan:", summary)
+        st.write("Summary:", summary)
 
         risks = detect_risk(extracted_text)
-        st.write("Risiko:", risks if risks else "Tidak ada")
+        st.write("Summary:", risks if risks else "Tidak ada")
 
         suggestions = smart_suggestions(extracted_text)
-        st.write("Saran:", suggestions if suggestions else "Tidak ada")
+        st.write("Suggestions:", suggestions if suggestions else "Tidak ada")
 
         insight = generate_insight(extracted_text, summary, risks, suggestions)
         st.subheader("Insight SEA-LION")
@@ -121,7 +120,7 @@ if uploaded_file is not None:
             with st.chat_message("user"):
                 st.markdown(prompt)
             with st.chat_message("assistant"):
-                with st.spinner("Menulis..."):
+                with st.spinner("Generating response..."):
                     response = generate_response(prompt)
                 st.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
