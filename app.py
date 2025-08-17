@@ -82,7 +82,7 @@ if uploaded_file:
         st.error(f"Error: {e}")
 
 # ====== CHAT INPUT ======
-prompt = st.chat_input("Ask heren...")
+prompt = st.chat_input("Ask here...")
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
